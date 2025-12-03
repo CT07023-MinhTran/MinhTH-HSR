@@ -1,0 +1,808 @@
+html body {
+  height: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  background: #23262e;
+  color: #fffff6;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: medium;
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  width: 100vw;
+  overflow-x: hidden;
+  background: #23262e;
+}
+
+.container {
+  width: 100vw;
+  min-height: 100vh;
+  max-width: 100vw;
+  margin: 0 auto;
+  padding: 0 0 40px 0;
+  box-sizing: border-box;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  margin: 0 auto 20px auto;
+  max-width: 1200px;
+  width: 100%;
+  padding: 24px 32px 0 32px;
+  box-sizing: border-box;
+}
+
+.header img {
+  width: 100px;
+  height: 100px;
+  border-radius: 10px;
+  margin-right: 20px;
+}
+
+.header-text h1 {
+  font-size: 28px;
+  margin: 0;
+}
+
+.header-text p {
+  color: #ccc;
+  margin: 5px 0 0;
+  font-size: 14px;
+}
+
+.header-text span {
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.section-title {
+  border-left: 10px solid #1a73e8;
+  padding-left: 10px;
+  font-weight: bold;
+  font-size: 16px;
+  margin: 0 auto 10px auto;
+  max-width: 1200px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.section-list {
+  background-color: #2a2a2a;
+  border-top: 2px solid #1a73e8;
+  border-radius: 3px;
+  overflow: hidden;
+  max-width: 1200px;
+  margin: 0 auto 24px auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.section {
+  border-bottom: 1px solid #444;
+  cursor: pointer;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  font-size: 15px;
+}
+
+.section:hover {
+  background-color: #333;
+}
+
+.dropdown-arrow {
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  display: inline-block;
+  padding: 4px;
+  transform: rotate(45deg);
+  transition: transform 0.3s;
+}
+
+.section.open .dropdown-arrow {
+  transform: rotate(-135deg);
+}
+
+.section-content {
+  display: none;
+  padding: 10px 20px;
+  background-color: #1e1e1e;
+  font-size: 14px;
+  color: #ccc;
+}
+
+.section.open .section-content {
+  display: block;
+}
+
+.updated-tag {
+  background-color: #e74c3c;
+  color: white;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-left: 10px;
+}
+
+footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  color: #fffff6;
+  font-family: Arial, Helvetica, sans-serif;
+  background-color: #23262e;
+}
+
+.font-size {
+  font-size: 12pt;
+}
+
+.text-red {
+  color: #b2504e;
+}
+
+.text-purple {
+  color: #bc67dc;
+}
+
+.text-yellow {
+  color: #eeb835;
+}
+
+.text-green {
+  color: #6bc099;
+}
+
+.text-gray {
+  color: #d3cfce;
+}
+
+.text-skyblue {
+  color: #88ebe8;
+}
+
+.text-blue {
+  color: #2492d0
+}
+
+.bold-text {
+  font-weight: bold;
+}
+
+.button-link {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+.button-link:hover {
+  background-color: #0056b3;
+}
+
+
+.title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #ffffff;
+  border-left: 6px solid #1a73e8;
+  padding-left: 10px;
+  margin-bottom: 20px;
+}
+
+.image-button-group {
+  display: flex;
+  gap: 10px;
+  margin: 30px auto 20px auto;
+  justify-content: center;
+  max-width: 1200px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.image-button {
+  position: relative;
+  flex: 1;
+  min-width: 280px;
+  height: 120px;
+  border: 2px solid #1a73e8;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.2s, border 0.2s;
+  box-shadow: 0 0 0 0 #1a73e8;
+  opacity: 0.7;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.image-button.active,
+.image-button:hover {
+  opacity: 1;
+  box-shadow: 0 0 0 2px #1a73e8;
+  border-color: #1a73e8;
+}
+
+.image-button img {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  filter: brightness(0.7);
+}
+
+.image-button span {
+  position: relative;
+  z-index: 2;
+  color: #fff;
+  font-size: 2em;
+  font-weight: bold;
+  text-shadow: 0 2px 8px #000, 0 0 2px #1a73e8;
+  margin-bottom: 18px;
+  text-align: center;
+  width: 100%;
+  letter-spacing: 1px;
+}
+
+.tierlist-content {
+  display: none;
+  margin-top: 20px;
+}
+
+.tierlist-content.active {
+  display: block;
+}
+
+/* Divider đỏ */
+.tierlist-divider {
+  border-top: 4px solid #e74c3c;
+  margin: 30px 0 10px 0;
+}
+
+
+/* Hàng tier */
+.tier-row {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 30px;
+}
+
+/* Nhãn tier (T0, T0.5) */
+.tier-label {
+  min-width: 70px;
+  background: #e74c3c;
+  color: #fff;
+  font-size: 1.5em;
+  font-weight: bold;
+  text-align: center;
+  padding: 20px 10px;
+  border-radius: 6px 0 0 6px;
+  margin-right: 10px;
+  letter-spacing: 1px;
+  writing-mode: vertical-lr;
+  transform: rotate(180deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tier-t0 {
+  background: #ee534f;
+}
+
+.tier-t05 {
+  background: #ec6562;
+}
+
+.tier-t1 {
+  background: #fea966;
+}
+
+.tier-t15 {
+  background: #ffbe7c;
+}
+
+.tier-t2 {
+  background: #fed4a0;
+}
+
+.tier-t3 {
+  background: #beff7f;
+}
+
+.tier-t4 {
+  background: #9df79d;
+}
+
+.tier-t5 {
+  background: #76f8f8;
+}
+
+/* Cột nhân vật */
+.tier-columns {
+  display: flex;
+  gap: 30px;
+  flex: 1;
+  width: 100%;
+}
+
+.tier-col {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 120px;
+}
+
+/* Card nhân vật */
+.char-card {
+  background: #23262e;
+  border-radius: 8px;
+  padding: 10px 10px 6px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 2px 8px #0006;
+  min-width: 100px;
+  min-height: 140px;
+  box-sizing: border-box;
+}
+
+.char-card img {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  border: 2px solid #888;
+  background: #181a20;
+  object-fit: cover;
+}
+
+.char-tags {
+  font-size: 0.95em;
+  font-weight: bold;
+  text-align: center;
+  margin-top: 2px;
+  line-height: 1.2;
+  padding: 2px 0;
+}
+
+.char-tags.green {
+  color: #6bc099;
+}
+
+.char-tags.red {
+  color: #b2504e;
+}
+
+.char-tags.yellow {
+  color: #eeb835;
+}
+
+/* Tiêu đề APEX CHARACTERS */
+.apex-title {
+  color: #e74c3c;
+  font-size: 2em;
+  font-weight: bold;
+  text-align: center;
+  margin: 10px 0 30px 0;
+  letter-spacing: 2px;
+  border-bottom: 2px solid #e74c3c;
+  padding-bottom: 8px;
+}
+.apex-group-table {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  margin: 0 0 18px 0;
+  gap: 12px;
+}
+
+.apex-group {
+  flex: 1 1 180px;
+  min-width: 180px;
+  max-width: 260px;
+  background: #23262e;
+  border: 2px solid #e74c3c;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 6px 10px 6px;
+  min-height: 60px;
+  box-sizing: border-box;
+}
+
+.apex-group-title {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 4px;
+  letter-spacing: 1px;
+}
+
+.apex-group.dps .apex-group-title {
+  color: #b2504e;
+}
+
+.apex-group.subdps .apex-group-title {
+  color: #bc67dc;
+}
+
+.apex-group.amplifier .apex-group-title {
+  color: #eeb835;
+}
+
+.apex-group.sustain .apex-group-title {
+  color: #6bc099;
+}
+
+.apex-group-desc {
+  color: #ccc;
+  font-size: 0.95em;
+  text-align: center;
+}
+
+.apex-group-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.apex-group-cards .char-card {
+  flex: 0 0 calc(33.33% - 10px);
+  max-width: 90px;
+  min-width: 80px;
+}
+/* Apex group table responsive */
+.apex-group-table {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  margin: 0 0 18px 0;
+  gap: 12px;
+  width: 100%;
+  overflow-x: auto;
+}
+
+.apex-group {
+  flex: 1 1 180px;
+  min-width: 180px;
+  max-width: 260px;
+  background: #23262e;
+  border: 2px solid #e74c3c;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 6px 10px 6px;
+  min-height: 60px;
+  box-sizing: border-box;
+}
+
+.apex-group-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.apex-group-cards .char-card {
+  flex: 0 0 calc(33.33% - 10px);
+  max-width: 90px;
+  min-width: 80px;
+}
+@media (max-width: 1300px) {
+  .header, .section-list, .section-title, .image-button-group, .apex-group-table, .tierlist-content {
+    max-width: 100vw;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}
+@media (max-width: 900px) {
+  .apex-group-table {
+    gap: 6px;
+  }
+  .apex-group {
+    min-width: 140px;
+    max-width: 180px;
+    padding: 10px 2px 8px 2px;
+  }
+  .apex-group-cards .char-card {
+    max-width: 70px;
+    min-width: 60px;
+  }
+  .apex-title {
+    font-size: 1.2em;
+  }
+}
+
+@media (max-width: 600px) {
+  .container {
+    max-width: 100vw;
+    padding: 0 2px;
+  }
+  .apex-group-table {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 4px;
+  }
+  .apex-group {
+    min-width: 120px;
+    max-width: 140px;
+    padding: 6px 1px 6px 1px;
+  }
+  .apex-group-cards .char-card {
+    max-width: 54px;
+    min-width: 48px;
+    padding: 4px 2px 2px 2px;
+  }
+  .tier-label {
+    font-size: 1em;
+    padding: 10px 4px;
+  }
+}
+.apex-role-table {
+  display: table;
+  width: 100%;
+  margin-bottom: 40px;
+  border-spacing: 0 18px;
+}
+.apex-role-row {
+  display: table-row;
+}
+.apex-role-header .apex-group-title {
+  font-size: 1.3em;
+  font-weight: bold;
+  display: block;
+  text-align: center;
+  padding: 8px 0 6px 0;
+  border-bottom: 2px solid #e74c3c;
+  letter-spacing: 1px;
+}
+.apex-role-cell {
+  display: table-cell;
+  vertical-align: top;
+  padding: 0 12px;
+  min-width: 220px;
+  width: 25%;
+}
+.apex-role-cards {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  width: 100%;
+}
+.apex-role-cards .char-card {
+  flex: 0 0 calc(33.333% - 8px);
+  max-width: 120px;
+  min-width: 100px;
+  margin-bottom: 8px;
+  box-sizing: border-box;
+}
+@media (max-width: 1100px) {
+  .apex-role-cell { min-width: 160px; }
+  .apex-role-cards .char-card { max-width: 90px; min-width: 70px; }
+}
+@media (max-width: 800px) {
+  .apex-role-table, .apex-role-row, .apex-role-cell {
+    display: block;
+    width: 100%;
+  }
+  .apex-role-cell {
+    min-width: 0;
+    width: 100%;
+    margin-bottom: 24px;
+    padding: 0;
+  }
+  .apex-role-cards {
+    justify-content: flex-start;
+  }
+}
+
+
+/* Tiêu đề META CHARACTERS */
+.meta-title {
+  color: #fed4a0;
+  font-size: 2em;
+  font-weight: bold;
+  text-align: center;
+  margin: 10px 0 30px 0;
+  letter-spacing: 2px;
+  border-bottom: 2px solid #fed4a0;
+  padding-bottom: 8px;
+}
+.meta-group-table {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  margin: 0 0 18px 0;
+  gap: 12px;
+}
+
+.meta-group {
+  flex: 1 1 180px;
+  min-width: 180px;
+  max-width: 260px;
+  background: #23262e;
+  border: 2px solid #fed4a0;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 6px 10px 6px;
+  min-height: 60px;
+  box-sizing: border-box;
+}
+
+.meta-group-title {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 4px;
+  letter-spacing: 1px;
+}
+
+.meta-group.dps .meta-group-title {
+  color: #b2504e;
+}
+
+.meta-group.subdps .meta-group-title {
+  color: #bc67dc;
+}
+
+.meta-group.amplifier .meta-group-title {
+  color: #eeb835;
+}
+
+.meta-group.sustain .meta-group-title {
+  color: #6bc099;
+}
+
+.meta-group-desc {
+  color: #ccc;
+  font-size: 0.95em;
+  text-align: center;
+}
+
+.meta-group-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.meta-group-cards .char-card {
+  flex: 0 0 calc(33.33% - 10px);
+  max-width: 90px;
+  min-width: 80px;
+}
+@media (max-width: 1300px) {
+  .header, .section-list, .section-title, .image-button-group, .meta-group-table, .tierlist-content {
+    max-width: 100vw;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}
+@media (max-width: 900px) {
+  .meta-group-table {
+    gap: 6px;
+  }
+  .meta-group {
+    min-width: 140px;
+    max-width: 180px;
+    padding: 10px 2px 8px 2px;
+  }
+  .meta-group-cards .char-card {
+    max-width: 70px;
+    min-width: 60px;
+  }
+  .meta-title {
+    font-size: 1.2em;
+  }
+}
+
+@media (max-width: 600px) {
+  .container {
+    max-width: 100vw;
+    padding: 0 2px;
+  }
+  .meta-group-table {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 4px;
+  }
+  .meta-group {
+    min-width: 120px;
+    max-width: 140px;
+    padding: 6px 1px 6px 1px;
+  }
+  .meta-group-cards .char-card {
+    max-width: 54px;
+    min-width: 48px;
+    padding: 4px 2px 2px 2px;
+  }
+  .tier-label {
+    font-size: 1em;
+    padding: 10px 4px;
+  }
+}
+.meta-role-table {
+  display: table;
+  width: 100%;
+  margin-bottom: 40px;
+  border-spacing: 0 18px;
+}
+.meta-role-row {
+  display: table-row;
+}
+.meta-role-header .meta-group-title {
+  font-size: 1.3em;
+  font-weight: bold;
+  display: block;
+  text-align: center;
+  padding: 8px 0 6px 0;
+  border-bottom: 2px solid #fed4a0;
+  letter-spacing: 1px;
+}
+.meta-role-cell {
+  display: table-cell;
+  vertical-align: top;
+  padding: 0 12px;
+  min-width: 220px;
+  width: 25%;
+}
+.meta-role-cards {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  width: 100%;
+}
+.meta-role-cards .char-card {
+  flex: 0 0 calc(33.333% - 8px);
+  max-width: 120px;
+  min-width: 100px;
+  margin-bottom: 8px;
+  box-sizing: border-box;
+}
+@media (max-width: 1100px) {
+  .meta-role-cell { min-width: 160px; }
+  .meta-role-cards .char-card { max-width: 90px; min-width: 70px; }
+}
+@media (max-width: 800px) {
+  .meta-role-table, .meta-role-row, .meta-role-cell {
+    display: block;
+    width: 100%;
+  }
+  .meta-role-cell {
+    min-width: 0;
+    width: 100%;
+    margin-bottom: 24px;
+    padding: 0;
+  }
+  .meta-role-cards {
+    justify-content: flex-start;
+  }
+}
