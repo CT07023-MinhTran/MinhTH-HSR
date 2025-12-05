@@ -36,14 +36,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             die("Lỗi nghiêm trọng: Thư mục '$target_dir' không có quyền ghi. Vui lòng kiểm tra lại quyền của thư mục trên hệ thống của bạn.");
         }
 
-        $image = $target_dir . basename($_FILES["image"]["name"]);
+        $image_name = basename($_FILES["image"]["name"]);
+        $target_file = $target_dir . $image_name;
         
         // Di chuyển file
-        if (!move_uploaded_file($_FILES["image"]["tmp_name"], $image)) {
+        if (!move_uploaded_file($_FILES["image"]["tmp_name"], $target_file)) {
             die("Lỗi: Đã có sự cố khi di chuyển file đã upload. Vui lòng thử lại.");
         }
+        $image = $image_name; // Chỉ lưu tên file vào DB
     } else if (!empty($_POST["old_image"])) {
-        $image = $_POST["old_image"];
+        // Nếu old_image có chứa đường dẫn, loại bỏ nó để đảm bảo chỉ lưu tên file.
+        $image = basename($_POST["old_image"]);
     } else if (isset($_FILES['image']) && $_FILES['image']['error'] != UPLOAD_ERR_NO_FILE) {
         // Xử lý các lỗi upload khác
         $error_code = $_FILES['image']['error'];
@@ -218,7 +221,7 @@ while ($row = $res->fetch_assoc()) {
                             <label>Hình đại diện:</label>
                             <input type="file" name="image">
                             <?php if ($image): ?>
-                                <img src="<?php echo $image; ?>" alt="avatar" style="height:40px;vertical-align:middle; margin-top: 5px;">
+                                <img src="uploads/characters/<?php echo $image; ?>" alt="avatar" style="height:40px;vertical-align:middle; margin-top: 5px;">
                                 <input type="hidden" name="old_image" value="<?php echo $image; ?>">
                             <?php endif; ?>
                         </div>
@@ -298,7 +301,7 @@ while ($row = $res->fetch_assoc()) {
                 <tbody>
                     <?php if ($list && $list->num_rows > 0): while ($row = $list->fetch_assoc()): ?>
                         <tr>
-                            <td class="col-image"><?php if (isset($row["image"]) && $row["image"]) echo '<img src="' . htmlspecialchars($row["image"]) . '" alt="'.htmlspecialchars($row['name']).'" style="height:40px;">'; ?></td>
+                            <td class="col-image"><?php if (isset($row["image"]) && $row["image"]) echo '<img src="uploads/characters/' . htmlspecialchars($row["image"]) . '" alt="'.htmlspecialchars($row['name']).'" style="height:40px;">'; ?></td>
                             <td class="col-char-name"><?php echo htmlspecialchars($row["name"]); ?></td>
                             <td class="col-path">
                                 <?php if (!empty($row["path_image"])) echo '<img src="' . htmlspecialchars($row["path_image"]) . '" alt="'.htmlspecialchars($row["path_name"]).'" style="height:24px; vertical-align:middle; margin-right: 5px;">'; ?>
