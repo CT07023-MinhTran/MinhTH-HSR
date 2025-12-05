@@ -205,7 +205,7 @@ $result = $stmt->get_result();
 
             <!-- ẢNH NHÂN VẬT -->
             <img class="avatar"
-                src="admin/uploads/characters/<?= urlencode($char['image']) ?>"
+                src="HonkaiStarrail/admin/uploads/characters/<?= urlencode($char['image']) ?>"
                 alt="<?= htmlspecialchars($char['name']) ?>">
 
             <div class="info-box">
@@ -216,12 +216,12 @@ $result = $stmt->get_result();
                 <div class="small-icons">
 
                     <img class="small-icon"
-                        src="admin/uploads/paths/<?= urlencode($char['path_icon']) ?>"
+                        src="HonkaiStarrail/admin/<?= urlencode($char['path_icon']) ?>"
                         alt="Path Icon"
                         title="<?= htmlspecialchars($char['path_name']) ?>">
 
                     <img class="small-icon"
-                        src="admin/uploads/elements/<?= urlencode($char['element_icon']) ?>"
+                        src="HonkaiStarrail/admin/<?= urlencode($char['element_icon']) ?>"
                         alt="Element Icon"
                         title="<?= htmlspecialchars($char['element_name']) ?>">
 
