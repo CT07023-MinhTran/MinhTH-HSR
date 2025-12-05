@@ -12,13 +12,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     $name = $_POST["name"];
+    // Mặc định giữ lại ảnh cũ nếu có
+    $image = !empty($_POST["old_image"]) ? basename($_POST["old_image"]) : "";
+
     if (isset($_FILES["image"]) && $_FILES["image"]["error"] == 0) {
         $target_dir = "uploads/paths/";
         if (!is_dir($target_dir)) mkdir($target_dir, 0777, true);
-        $image = $target_dir . basename($_FILES["image"]["name"]);
-        move_uploaded_file($_FILES["image"]["tmp_name"], $image);
-    } else if (!empty($_POST["old_image"])) {
-        $image = $_POST["old_image"];
+        $image_name = basename($_FILES["image"]["name"]);
+        $target_file = $target_dir . $image_name;
+        move_uploaded_file($_FILES["image"]["tmp_name"], $target_file);
+        $image = $image_name; // Chỉ lưu tên file vào DB
     }
     if (isset($_POST["id"]) && $_POST["id"] != "") {
         $stmt = $conn->prepare("UPDATE paths SET path=?, image=? WHERE id=?");
@@ -97,8 +100,8 @@ $list = $conn->query("SELECT * FROM paths ORDER BY path ASC");
                     <label>Hình đại diện:</label>
                     <input type="file" name="image">
                     <?php if ($image): ?>
-                        <img src="<?php echo $image; ?>" alt="avatar" style="height:40px;vertical-align:middle;">
-                        <input type="hidden" name="old_image" value="<?php echo $image; ?>">
+                        <img src="uploads/paths/<?php echo htmlspecialchars($image); ?>" alt="avatar" style="height:40px;vertical-align:middle;">
+                        <input type="hidden" name="old_image" value="<?php echo htmlspecialchars($image); ?>">
                     <?php endif; ?>
                 </div>
                 <div class="form-group">
@@ -120,7 +123,7 @@ $list = $conn->query("SELECT * FROM paths ORDER BY path ASC");
                     <?php if ($list && $list->num_rows > 0): ?>
                         <?php while ($row = $list->fetch_assoc()): ?>
                         <tr>
-                            <td class="col-image"><?php if ($row["image"]) echo '<img src="'.htmlspecialchars($row["image"]).'" alt="'.htmlspecialchars($row["path"]).'" style="height:40px;">'; ?></td>
+                            <td class="col-image"><?php if ($row["image"]) echo '<img src="uploads/paths/'.htmlspecialchars($row["image"]).'" alt="'.htmlspecialchars($row["path"]).'" style="height:40px;">'; ?></td>
                             <td><?php echo htmlspecialchars($row["path"]); ?></td>
                             <td class="col-action"><a href="?edit=<?php echo $row["id"]; ?>" class="btn-edit">Sửa</a></td>
                         </tr>
