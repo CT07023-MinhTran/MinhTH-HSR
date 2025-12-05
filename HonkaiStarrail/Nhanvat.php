@@ -162,6 +162,21 @@ $result = $stmt->get_result();
         @media (max-width: 900px) {
             .character-grid { grid-template-columns: 1fr; }
         }
+
+        /* Rarity stars */
+        .rarity-stars {
+            margin-bottom: 8px;
+            line-height: 1;
+        }
+        .star {
+            font-size: 1.3em;
+        }
+        .star-5 {
+            color: #dca753; /* Gold */
+        }
+        .star-4 {
+            color: #a072de; /* Purple */
+        }
     </style>
 </head>
 <body>
@@ -212,6 +227,18 @@ $result = $stmt->get_result();
                 
                 <h3><?= htmlspecialchars($char['name']) ?></h3>
 
+                <!-- HIỂN THỊ SAO -->
+                <div class="rarity-stars">
+                    <?php
+                    $rarity = intval($char['rarity']);
+                    if ($rarity > 0) {
+                        $star_class = "star star-" . $rarity;
+                        for ($i = 0; $i < $rarity; $i++) {
+                            echo '<span class="' . $star_class . '">&#9733;</span>';
+                        }
+                    }
+                    ?>
+                </div>
                 <!-- ICON PATH + ELEMENT -->
                 <div class="small-icons">
 
