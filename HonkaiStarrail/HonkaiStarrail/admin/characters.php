@@ -304,11 +304,11 @@ while ($row = $res->fetch_assoc()) {
                             <td class="col-image"><?php if (isset($row["image"]) && $row["image"]) echo '<img src="uploads/characters/' . htmlspecialchars($row["image"]) . '" alt="'.htmlspecialchars($row['name']).'" style="height:40px;">'; ?></td>
                             <td class="col-char-name"><?php echo htmlspecialchars($row["name"]); ?></td>
                             <td class="col-path">
-                                <?php if (!empty($row["path_image"])) echo '<img src="' . htmlspecialchars($row["path_image"]) . '" alt="'.htmlspecialchars($row["path_name"]).'" style="height:24px; vertical-align:middle; margin-right: 5px;">'; ?>
+                                <?php if (!empty($row["path_image"])) echo '<img src="uploads/paths/' . htmlspecialchars($row["path_image"]) . '" alt="'.htmlspecialchars($row["path_name"]).'" style="height:24px; vertical-align:middle; margin-right: 5px;">'; ?>
                                 <?php echo htmlspecialchars($row["path_name"] ?? 'N/A'); ?>
                             </td>
                             <td class="col-element">
-                                <?php if (!empty($row["element_image"])) echo '<img src="' . htmlspecialchars($row["element_image"]) . '" alt="'.htmlspecialchars($row["element_name"]).'" style="height:24px; vertical-align:middle; margin-right: 5px;">'; ?>
+                                <?php if (!empty($row["element_image"])) echo '<img src="uploads/elements/' . htmlspecialchars($row["element_image"]) . '" alt="'.htmlspecialchars($row["element_name"]).'" style="height:24px; vertical-align:middle; margin-right: 5px;">'; ?>
                                 <?php echo htmlspecialchars($row["element_name"] ?? 'N/A'); ?>
                             </td>
                             <td class="col-rarity">
