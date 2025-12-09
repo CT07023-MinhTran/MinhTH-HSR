@@ -42,10 +42,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (!is_dir($target_dir)) {
             mkdir($target_dir, 0777, true);
         }
-        $image = $target_dir . basename($_FILES["image"]["name"]);
-        move_uploaded_file($_FILES["image"]["tmp_name"], $image);
+        $image_basename = basename($_FILES["image"]["name"]);
+        move_uploaded_file($_FILES["image"]["tmp_name"], $target_dir . $image_basename);
+        $image = $image_basename;
     } else if (!empty($_POST["old_image"])) {
-        $image = $_POST["old_image"];
+        $image = basename($_POST["old_image"]);
     }
 
     if (isset($_POST["id"]) && !empty($_POST["id"])) {
@@ -89,6 +90,10 @@ if (isset($_GET["edit"])) {
         $hp = $row["hp"];
         $atk = $row["atk"];
         $def = $row["def"];
+
+        if ($image && strpos($image, 'uploads/lightcones/') === false) {
+            $image = 'uploads/lightcones/' . $image;
+        }
     }
 }
 
@@ -255,12 +260,22 @@ $list = $conn->query($list_sql);
                 </thead>
                 <tbody>
                     <?php if ($list && $list->num_rows > 0): ?>
-                        <?php while ($row = $list->fetch_assoc()): ?>
+                        <?php while ($row = $list->fetch_assoc()): 
+                            if (!empty($row['image']) && strpos($row['image'], 'uploads/lightcones/') === false) {
+                                $row['image'] = 'uploads/lightcones/' . $row['image'];
+                            }
+                        ?>
                         <tr>
                             <td class="col-image"><?php if ($row["image"]) echo '<img src="'.htmlspecialchars($row["image"]).'" alt="'.htmlspecialchars($row["name"]).'" style="height:40px;">'; ?></td>
                             <td class="col-name"><?php echo htmlspecialchars($row["name"]); ?></td>
                             <td class="col-path">
-                                <?php if (!empty($row["path_image"])) echo '<img src="'.htmlspecialchars($row["path_image"]).'" alt="'.htmlspecialchars($row["path_name"] ?? '').'" style="height:24px; vertical-align:middle; margin-right: 5px;">'; ?>
+                                <?php 
+                                if (!empty($row["path_image"])) {
+                                    // Thêm tiền tố đường dẫn chính xác vào ảnh Vận Mệnh
+                                    $path_img_src = 'uploads/paths/' . htmlspecialchars($row["path_image"]);
+                                    echo '<img src="'.$path_img_src.'" alt="'.htmlspecialchars($row["path_name"] ?? '').'" style="height:24px; vertical-align:middle; margin-right: 5px;">'; 
+                                }
+                                ?>
                                 <?php echo htmlspecialchars($row["path_name"] ?? 'N/A'); ?>
                             </td>
                             <td class="col-rarity">

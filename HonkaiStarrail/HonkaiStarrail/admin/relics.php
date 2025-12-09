@@ -31,10 +31,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (!is_dir($target_dir)) {
             mkdir($target_dir, 0777, true);
         }
-        $icon = $target_dir . basename($_FILES["icon"]["name"]);
-        move_uploaded_file($_FILES["icon"]["tmp_name"], $icon);
+        $image_basename = basename($_FILES["icon"]["name"]);
+        move_uploaded_file($_FILES["icon"]["tmp_name"], $target_dir . $image_basename);
+        $icon = $image_basename;
     } else if (!empty($_POST["old_icon"])) {
-        $icon = $_POST["old_icon"];
+        $icon = basename($_POST["old_icon"]);
     }
 
     if (isset($_POST["id"]) && !empty($_POST["id"])) {
@@ -74,6 +75,10 @@ if (isset($_GET["edit"])) {
         $type = $row["type"];
         $set2_effect = $row["set2_effect"];
         $set4_effect = $row["set4_effect"];
+
+        if ($icon && strpos($icon, 'uploads/relics/') === false) {
+            $icon = 'uploads/relics/' . $icon;
+        }
     }
 }
 
@@ -98,6 +103,9 @@ $relics_list = [];
 $ornaments_list = [];
 if ($list_query && $list_query->num_rows > 0) {
     while ($row = $list_query->fetch_assoc()) {
+        if (!empty($row['icon']) && strpos($row['icon'], 'uploads/relics/') === false) {
+            $row['icon'] = 'uploads/relics/' . $row['icon'];
+        }
         // Sử dụng trim() để loại bỏ khoảng trắng và so sánh an toàn hơn
         if (isset($row['type']) && trim($row['type']) == 'Planetary Ornament Set') {
             $ornaments_list[] = $row;

@@ -50,7 +50,7 @@ $characterImages = [];    // id => image path (if exists)
 $r = $conn->query("SELECT id, name, image FROM characters ORDER BY name ASC");
 while ($row = $r->fetch_assoc()) {
     $characters[$row['id']] = $row['name'];
-    $characterImages[$row['id']] = !empty($row['image']) ? $row['image'] : "images/default.png";
+    $characterImages[$row['id']] = !empty($row['image']) ? 'Hình ảnh/characters/' . $row['image'] : "images/default.png";
 }
 
 // Truy vấn danh sách Nón Ánh Sáng
@@ -874,8 +874,8 @@ $msg = $msg ?? "";
                                         <select id="main_body_1" onchange="showNextMainStat('main_body', 1)">
                                             <option value="">Chọn</option>
                                             <option>%HP</option>
-                                            <option>%Tấn Công</option>
-                                            <option>%Phòng Thủ</option>
+                                            <option>%ATK</option>
+                                            <option>%DEF</option>
                                             <option>Tỉ Lệ Bạo Kích</option>
                                             <option>Sát Thương Bạo Kích</option>
                                             <option>Chính Xác Hiệu Ứng</option>
@@ -884,8 +884,8 @@ $msg = $msg ?? "";
                                         <select id="main_body_2" style="display:none;" onchange="showNextMainStat('main_body', 2)">
                                             <option value="">Chọn</option>
                                             <option>%HP</option>
-                                            <option>%Tấn Công</option>
-                                            <option>%Phòng Thủ</option>
+                                            <option>%ATK</option>
+                                            <option>%DEF</option>
                                             <option>Tỉ Lệ Bạo Kích</option>
                                             <option>Sát Thương Bạo Kích</option>
                                             <option>Chính Xác Hiệu Ứng</option>
@@ -894,8 +894,8 @@ $msg = $msg ?? "";
                                         <select id="main_body_3" style="display:none;" onchange="showNextMainStat('main_body', 3)">
                                             <option value="">Chọn</option>
                                             <option>%HP</option>
-                                            <option>%Tấn Công</option>
-                                            <option>%Phòng Thủ</option>
+                                            <option>%ATK</option>
+                                            <option>%DEF</option>
                                             <option>Tỉ Lệ Bạo Kích</option>
                                             <option>Sát Thương Bạo Kích</option>
                                             <option>Chính Xác Hiệu Ứng</option>
@@ -908,22 +908,22 @@ $msg = $msg ?? "";
                                         <select id="main_feet_1" onchange="showNextMainStat('main_feet', 1)">
                                             <option value="">Chọn</option>
                                             <option>%HP</option>
-                                            <option>%Tấn Công</option>
-                                            <option>%Phòng Thủ</option>
+                                            <option>%ATK</option>
+                                            <option>%DEF</option>
                                             <option>Tốc Độ</option>
                                         </select>
                                         <select id="main_feet_2" style="display:none;" onchange="showNextMainStat('main_feet', 2)">
                                             <option value="">Chọn</option>
                                             <option>%HP</option>
-                                            <option>%Tấn Công</option>
-                                            <option>%Phòng Thủ</option>
+                                            <option>%ATK</option>
+                                            <option>%DEF</option>
                                             <option>Tốc Độ</option>
                                         </select>
                                         <select id="main_feet_3" style="display:none;" onchange="showNextMainStat('main_feet', 3)">
                                             <option value="">Chọn</option>
                                             <option>%HP</option>
-                                            <option>%Tấn Công</option>
-                                            <option>%Phòng Thủ</option>
+                                            <option>%ATK</option>
+                                            <option>%DEF</option>
                                             <option>Tốc Độ</option>
                                         </select>
                                     </div>
@@ -933,8 +933,8 @@ $msg = $msg ?? "";
                                         <select id="main_sphere_1" onchange="showNextMainStat('main_sphere', 1)">
                                             <option value="">Chọn</option>
                                             <option>%HP</option>
-                                            <option>%Tấn Công</option>
-                                            <option>%Phòng Thủ</option>
+                                            <option>%ATK</option>
+                                            <option>%DEF</option>
                                             <option>Tăng Sát Thương Vật Lý</option>
                                             <option>Tăng Sát Thương Hỏa</option>
                                             <option>Tăng Sát Thương Băng</option>
@@ -946,8 +946,8 @@ $msg = $msg ?? "";
                                         <select id="main_sphere_2" style="display:none;" onchange="showNextMainStat('main_sphere', 2)">
                                             <option value="">Chọn</option>
                                             <option>%HP</option>
-                                            <option>%Tấn Công</option>
-                                            <option>%Phòng Thủ</option>
+                                            <option>%ATK</option>
+                                            <option>%DEF</option>
                                             <option>Tăng Sát Thương Vật Lý</option>
                                             <option>Tăng Sát Thương Hỏa</option>
                                             <option>Tăng Sát Thương Băng</option>
@@ -959,8 +959,8 @@ $msg = $msg ?? "";
                                         <select id="main_sphere_3" style="display:none;" onchange="showNextMainStat('main_sphere', 3)">
                                             <option value="">Chọn</option>
                                             <option>%HP</option>
-                                            <option>%Tấn Công</option>
-                                            <option>%Phòng Thủ</option>
+                                            <option>%ATK</option>
+                                            <option>%DEF</option>
                                             <option>Tăng Sát Thương Vật Lý</option>
                                             <option>Tăng Sát Thương Hỏa</option>
                                             <option>Tăng Sát Thương Băng</option>
@@ -976,24 +976,24 @@ $msg = $msg ?? "";
                                         <select id="main_rope_1" onchange="showNextMainStat('main_rope', 1)">
                                             <option value="">Chọn</option>
                                             <option>%HP</option>
-                                            <option>%Tấn Công</option>
-                                            <option>%Phòng Thủ</option>
+                                            <option>%ATK</option>
+                                            <option>%DEF</option>
                                             <option>Tấn Công Kích Phá</option>
                                             <option>Hiệu Suất Hồi Năng Lượng</option>
                                         </select>
                                         <select id="main_rope_2" style="display:none;" onchange="showNextMainStat('main_rope', 2)">
                                             <option value="">Chọn</option>
                                             <option>%HP</option>
-                                            <option>%Tấn Công</option>
-                                            <option>%Phòng Thủ</option>
+                                            <option>%ATK</option>
+                                            <option>%DEF</option>
                                             <option>Tấn Công Kích Phá</option>
                                             <option>Hiệu Suất Hồi Năng Lượng</option>
                                         </select>
                                         <select id="main_rope_3" style="display:none;" onchange="showNextMainStat('main_rope', 3)">
                                             <option value="">Chọn</option>
                                             <option>%HP</option>
-                                            <option>%Tấn Công</option>
-                                            <option>%Phòng Thủ</option>
+                                            <option>%ATK</option>
+                                            <option>%DEF</option>
                                             <option>Tấn Công Kích Phá</option>
                                             <option>Hiệu Suất Hồi Năng Lượng</option>
                                         </select>
