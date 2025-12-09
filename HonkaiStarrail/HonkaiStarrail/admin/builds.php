@@ -398,10 +398,12 @@ $msg = $msg ?? "";
                             for (let i = 1; i <= 3; i++) {
                                 const item = obj.list[i - 1] || {
                                     name: '',
-                                    rate: ''
+                                    rate: '',
+                                    effect: ''
                                 };
                                 document.getElementById('lightcone' + i).value = item.name || '';
                                 document.getElementById('lightcone' + i + '_rate').value = item.rate || '';
+                                document.getElementById('lightcone' + i + '_effect').value = item.effect || '';
                             }
                         }
                     } catch (e) {}
@@ -414,10 +416,12 @@ $msg = $msg ?? "";
                             for (let i = 1; i <= 3; i++) {
                                 const item = obj.list[i - 1] || {
                                     name: '',
-                                    rate: ''
+                                    rate: '',
+                                    effect: ''
                                 };
                                 document.getElementById('relic' + i).value = item.name || '';
                                 document.getElementById('relic' + i + '_rate').value = item.rate || '';
+                                document.getElementById('relic' + i + '_effect').value = item.effect || '';
                             }
                         }
                     } catch (e) {}
@@ -726,7 +730,7 @@ $msg = $msg ?? "";
                                 <th>STT</th>
                                 <th>Tên Nón Ánh Sáng</th>
                                 <th>Tỉ lệ sử dụng (%)</th>
-                                <th>Thao tác</th>
+                                <th>Hiệu quả</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -736,10 +740,7 @@ $msg = $msg ?? "";
                                     <input type="text" id="lightcone1" list="datalist-lightcones" placeholder="Tên Nón Ánh Sáng">
                                 </td>
                                 <td><input type="text" id="lightcone1_rate" placeholder="Tỉ lệ (%)" style="width:60px;"></td>
-                                <td>
-                                    <button type="button" onclick="/* add row logic */">+</button>
-                                    <button type="button" onclick="/* remove row logic */">-</button>
-                                </td>
+                                <td><input type="text" id="lightcone1_effect" placeholder="Hiệu quả (%)" style="width:80px;"></td>
                             </tr>
                             <tr>
                                 <td>2</td>
@@ -747,10 +748,7 @@ $msg = $msg ?? "";
                                     <input type="text" id="lightcone2" list="datalist-lightcones" placeholder="Tên Nón Ánh Sáng">
                                 </td>
                                 <td><input type="text" id="lightcone2_rate" placeholder="Tỉ lệ (%)" style="width:60px;"></td>
-                                <td>
-                                    <button type="button" onclick="/* add row logic */">+</button>
-                                    <button type="button" onclick="/* remove row logic */">-</button>
-                                </td>
+                                <td><input type="text" id="lightcone2_effect" placeholder="Hiệu quả (%)" style="width:80px;"></td>
                             </tr>
                             <tr>
                                 <td>3</td>
@@ -758,10 +756,7 @@ $msg = $msg ?? "";
                                     <input type="text" id="lightcone3" list="datalist-lightcones" placeholder="Tên Nón Ánh Sáng">
                                 </td>
                                 <td><input type="text" id="lightcone3_rate" placeholder="Tỉ lệ (%)" style="width:60px;"></td>
-                                <td>
-                                    <button type="button" onclick="/* add row logic */">+</button>
-                                    <button type="button" onclick="/* remove row logic */">-</button>
-                                </td>
+                                <td><input type="text" id="lightcone3_effect" placeholder="Hiệu quả (%)" style="width:80px;"></td>
                             </tr>
                         </tbody>
                     </table>
@@ -777,7 +772,7 @@ $msg = $msg ?? "";
                                 <th>Hiệu quả</th>
                                 <th>Bộ 2 (nếu chọn hiệu quả 2)</th>
                                 <th>Tỉ lệ sử dụng (%)</th>
-                                <th>Thao tác</th>
+                                <th>Hiệu quả</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -797,10 +792,7 @@ $msg = $msg ?? "";
                                     <input type="text" id="relic_2set_<?= $i ?>" list="datalist-relics" placeholder="Bộ Di Vật 2" style="display:none;">
                                 </td>
                                 <td><input type="text" id="relic<?= $i ?>_rate" placeholder="Tỉ lệ (%)" style="width:60px;"></td>
-                                <td>
-                                    <button type="button" onclick="/* add row logic */">+</button>
-                                    <button type="button" onclick="/* remove row logic */">-</button>
-                                </td>
+                                <td><input type="text" id="relic<?= $i ?>_effect" placeholder="Hiệu quả (%)" style="width:80px;"></td>
                             </tr>
                             <?php endfor; ?>
                         </tbody>
@@ -815,7 +807,6 @@ $msg = $msg ?? "";
                                 <th>STT</th>
                                 <th>Tên Phụ Kiện</th>
                                 <th>Tỉ lệ sử dụng (%)</th>
-                                <th>Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -825,10 +816,6 @@ $msg = $msg ?? "";
                                     <input type="text" id="ornament1" list="datalist-planar" placeholder="Tên Phụ Kiện Vị Diện">
                                 </td>
                                 <td><input type="text" id="ornament1_rate" placeholder="Tỉ lệ (%)" style="width:60px;"></td>
-                                <td>
-                                    <button type="button" onclick="/* add row logic */">+</button>
-                                    <button type="button" onclick="/* remove row logic */">-</button>
-                                </td>
                             </tr>
                             <tr>
                                 <td>2</td>
@@ -836,10 +823,6 @@ $msg = $msg ?? "";
                                     <input type="text" id="ornament2" list="datalist-planar" placeholder="Tên Phụ Kiện Vị Diện">
                                 </td>
                                 <td><input type="text" id="ornament2_rate" placeholder="Tỉ lệ (%)" style="width:60px;"></td>
-                                <td>
-                                    <button type="button" onclick="/* add row logic */">+</button>
-                                    <button type="button" onclick="/* remove row logic */">-</button>
-                                </td>
                             </tr>
                             <tr>
                                 <td>3</td>
@@ -847,10 +830,6 @@ $msg = $msg ?? "";
                                     <input type="text" id="ornament3" list="datalist-planar" placeholder="Tên Phụ Kiện Vị Diện">
                                 </td>
                                 <td><input type="text" id="ornament3_rate" placeholder="Tỉ lệ (%)" style="width:60px;"></td>
-                                <td>
-                                    <button type="button" onclick="/* add row logic */">+</button>
-                                    <button type="button" onclick="/* remove row logic */">-</button>
-                                </td>
                             </tr>
                         </tbody>
                     </table>
