@@ -1,0 +1,145 @@
+/* style.css */
+
+/* Reset cơ bản */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Biến màu để dễ chỉnh */
+:root{
+  --bg1: #0f1724;         /* nền chính (dark blue/charcoal) */
+  --bg2: #122033;         /* gradient thứ 2 */
+  --card: rgba(255,255,255,0.04);
+  --accent: #ffcc33;      /* màu nhấn cho button */
+  --muted: #cbd5e1;       /* chữ phụ */
+  --text: #fffff6;        /* giữ màu text bạn dùng */
+  --maxwidth: 900px;
+  --radius: 18px;
+  --shadow: 0 8px 30px rgba(2,6,23,0.6);
+  --glass: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+}
+
+/* Body & layout */
+html, body {
+  height: 100%;
+  font-family: "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: linear-gradient(135deg, var(--bg1), var(--bg2));
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  line-height: 1.45;
+}
+
+/* Container để bố cục gọn */
+main, .page {
+  width: 100%;
+  max-width: var(--maxwidth);
+  text-align: center;
+  background: var(--glass);
+  border-radius: calc(var(--radius) + 6px);
+  padding: 36px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(6px) saturate(120%);
+  border: 1px solid rgba(255,255,255,0.03);
+}
+
+/* Nếu người dùng không đổi HTML, bọc bằng selector body > * để áp dụng */
+body > * {
+  margin: 0 auto;
+}
+
+/* Paragraph */
+p {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 18px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+/* Ảnh - responsive, viền bo, hiệu ứng nhẹ */
+img {
+  display: inline-block;
+  max-width: min(100%, 300px);
+  width: 30%;
+  height: auto;
+  border-radius: 14px;
+  object-fit: cover;
+  box-shadow: 0 10px 30px rgba(2,6,23,0.6);
+  border: 1px solid rgba(255,255,255,0.04);
+  transition: transform 280ms ease, filter 280ms ease;
+}
+
+/* hover / focus animation cho ảnh (tắt nếu reduced motion) */
+@media (prefers-reduced-motion: no-preference) {
+  img:hover {
+    transform: translateY(-6px) scale(1.01);
+    filter: saturate(1.05) contrast(1.02);
+  }
+}
+
+/* Link dạng nút */
+a.button-link {
+  display: inline-block;
+  margin-top: 22px;
+  text-decoration: none;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  background: linear-gradient(90deg, rgba(255,204,51,0.14), rgba(255,204,51,0.06));
+  color: var(--text);
+  border: 1px solid rgba(255,204,51,0.18);
+  box-shadow: 0 6px 22px rgba(255,204,51,0.06), inset 0 -1px 0 rgba(255,255,255,0.02);
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+/* Nút hover/focus - rõ ràng cho truy cập */
+a.button-link:hover,
+a.button-link:focus {
+  transform: translateY(-3px);
+  background: linear-gradient(90deg, rgba(255,204,51,0.22), rgba(255,204,51,0.10));
+  box-shadow: 0 12px 34px rgba(255,204,51,0.12);
+  outline: none;
+}
+
+/* Focus-visible cho keyboard users */
+a.button-link:focus-visible {
+  outline: 3px solid rgba(255,204,51,0.18);
+  outline-offset: 4px;
+}
+
+/* Nhỏ màn hình: đưa mọi thứ thẳng hàng dọc, giảm padding */
+@media (max-width: 640px) {
+  body {
+    padding: 20px 12px;
+  }
+  p {
+    font-size: 1rem;
+  }
+  .page, main {
+    padding: 20px;
+    border-radius: 12px;
+  }
+  img {
+    border-radius: 12px;
+  }
+}
+
+/* In case the HTML doesn't wrap content in a container, add a visual wrapper */
+body > p, body > img, body > a.button-link {
+  max-width: var(--maxwidth);
+}
+
+/* Print-friendly: ẩn background, chuyển*
