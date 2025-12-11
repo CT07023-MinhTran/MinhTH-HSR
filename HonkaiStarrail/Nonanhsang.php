@@ -6,21 +6,62 @@ if ($conn->connect_error) {
 }
 $conn->set_charset("utf8mb4");
 
-// 2. Query lấy danh sách Nón Ánh Sáng
+// 2. Lấy các giá trị lọc từ URL (nếu có)
+$selected_rarity = isset($_GET['rarity']) ? $_GET['rarity'] : '';
+$selected_path_id = isset($_GET['path_id']) ? $_GET['path_id'] : '';
+
+// 3. Lấy danh sách Vận mệnh để hiển thị trong bộ lọc
+$paths_result = $conn->query("SELECT id, path FROM paths ORDER BY path ASC");
+$paths = [];
+if ($paths_result->num_rows > 0) {
+    while ($row = $paths_result->fetch_assoc()) {
+        $paths[] = $row;
+    }
+}
+
+// 4. Xây dựng câu truy vấn SQL động dựa trên bộ lọc
 $sql = "
     SELECT 
         lc.*, 
         p.path AS path_name, 
         p.image AS path_icon
     FROM lightcones lc
-    LEFT JOIN paths p ON lc.path_id = p.id
-    ORDER BY lc.rarity DESC, lc.name ASC
-";
+    LEFT JOIN paths p ON lc.path_id = p.id";
 
-$result = $conn->query($sql);
-if ($result === false) {
-    die("Lỗi truy vấn: " . $conn->error);
+$conditions = [];
+$params = [];
+$types = '';
+
+if ($selected_rarity !== '') {
+    $conditions[] = "lc.rarity = ?";
+    $params[] = $selected_rarity;
+    $types .= 'i';
 }
+
+if ($selected_path_id !== '') {
+    $conditions[] = "lc.path_id = ?";
+    $params[] = $selected_path_id;
+    $types .= 'i';
+}
+
+if (count($conditions) > 0) {
+    $sql .= " WHERE " . implode(" AND ", $conditions);
+}
+
+$sql .= " ORDER BY lc.rarity DESC, lc.name ASC";
+
+// 5. Sử dụng Prepared Statement để thực thi truy vấn an toàn
+$stmt = $conn->prepare($sql);
+if ($stmt === false) {
+    die("Lỗi chuẩn bị truy vấn: " . $conn->error);
+}
+
+if ($types !== '') {
+    $stmt->bind_param($types, ...$params);
+}
+
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -39,6 +80,39 @@ if ($result === false) {
             text-align: center;
             margin-bottom: 30px; 
             color: #1e3a56;
+        }
+
+        /* Filter Form Styles */
+        .filter-container {
+            max-width: 1200px;
+            margin: 0 auto 30px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-group label {
+            font-weight: bold;
+            color: #333;
+            font-size: 0.9em;
+        }
+
+        .filter-group select, .filter-container button {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1em;
         }
 
         .lightcone-grid {
@@ -162,6 +236,30 @@ if ($result === false) {
 
 <h2>Danh sách Nón Ánh Sáng</h2>
 
+<!-- Filter Form -->
+<div class="filter-container">
+    <form method="GET" action="" style="display: flex; gap: 20px; align-items: flex-end;">
+        <div class="filter-group">
+            <label for="rarity">Độ hiếm</label>
+            <select name="rarity" id="rarity">
+                <option value="">Tất cả</option>
+                <option value="5" <?php if ($selected_rarity == '5') echo 'selected'; ?>>5 ★</option>
+                <option value="4" <?php if ($selected_rarity == '4') echo 'selected'; ?>>4 ★</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="path_id">Vận mệnh</label>
+            <select name="path_id" id="path_id">
+                <option value="">Tất cả</option>
+                <?php foreach ($paths as $path): ?>
+                    <option value="<?php echo $path['id']; ?>" <?php if ($selected_path_id == $path['id']) echo 'selected'; ?>><?php echo htmlspecialchars($path['path']); ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <button type="submit">Lọc</button>
+    </form>
+</div>
+
 <div class="lightcone-grid">
     <?php if ($result->num_rows > 0): ?>
         <?php while ($lc = $result->fetch_assoc()): ?>
@@ -172,7 +270,7 @@ if ($result === false) {
             <div class="lightcone-card">
                 <!-- Hình ảnh bên trái -->
                 <div class="image-container <?php echo $rarity_bg_class; ?>">
-                    <img class="lightcone-image" src="HonkaiStarrail/admin/<?php echo htmlspecialchars($lc['image']); ?>" alt="<?php echo htmlspecialchars($lc['name']); ?>">
+                    <img class="lightcone-image" src="HonkaiStarrail/admin/uploads/lightcones/<?php echo htmlspecialchars($lc['image']); ?>" alt="<?php echo htmlspecialchars($lc['name']); ?>">
                 </div>
 
                 <!-- Thông tin bên phải -->
@@ -214,6 +312,9 @@ if ($result === false) {
     <?php endif; ?>
 </div>
 
-<?php $conn->close(); ?>
+<?php 
+$stmt->close();
+$conn->close(); 
+?>
 </body>
 </html>
