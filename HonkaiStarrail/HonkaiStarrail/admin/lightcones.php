@@ -159,7 +159,7 @@ $list = $conn->query($list_sql);
             <span>Administrator</span>
         </div>
         <div class="admin-nav">
-            <a href="../Trangchinh.php">Trang chủ website</a>
+            <a href="/HSR/HonkaiStarrail/Trangchinh.php">Trang chủ website</a>
             <span class="admin-user">Xin chào: admin</span>
         </div>
     </div>

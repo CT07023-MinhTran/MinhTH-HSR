@@ -73,7 +73,7 @@ $list = $conn->query("SELECT * FROM elements ORDER BY element ASC");
             <span>Administrator</span>
         </div>
         <div class="admin-nav">
-            <a href="../Trangchinh.php">Trang chủ website</a>
+            <a href="/HSR/HonkaiStarrail/Trangchinh.php">Trang chủ website</a>
             <span class="admin-user">Xin chào: admin</span>
         </div>
     </div>

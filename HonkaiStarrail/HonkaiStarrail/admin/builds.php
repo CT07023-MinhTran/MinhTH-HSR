@@ -94,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_build'])) {
         $substats = $_POST['substats_priority'] ?? '';
         $target_stats = $_POST['target_stats'] ?? '';
 
-        // teams: team1_1..team10_4 (hidden inputs)
+        // teams: team1_1..team10_4
         $teams = [];
         for ($t = 1; $t <= 10; $t++) {
             for ($s = 1; $s <= 4; $s++) {
@@ -110,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_build'])) {
         $res = $stmt->get_result();
         $exist = $res->fetch_assoc();
         if ($exist) {
-            // UPDATE row
+            // UPDATE
             $id = (int)$exist['id'];
             $setParts = [
                 "`lightcone` = ?",
@@ -136,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_build'])) {
             $ok = $stmt->execute();
             $msg = $ok ? "Cập nhật build thành công." : "Lỗi khi cập nhật: " . $stmt->error;
         } else {
-            // INSERT new row
+            // INSERT
             $cols = ["character_id", "lightcone", "relics", "planar", "main_stats", "substats_priority", "target_stats"];
             $vals = [$character_id, $lightcone, $relics, $planar, $main_stats, $substats, $target_stats];
             foreach ($teams as $col => $val) {
@@ -160,7 +160,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_build'])) {
         }
     }
 }
-// Initialize $msg so HTML can show it (POST handling in Part 4 may set it).
 $msg = $msg ?? "";
 ?>
 <!DOCTYPE html>
@@ -339,6 +338,10 @@ $msg = $msg ?? "";
                 avatar.src = characterImages[id];
                 avatar.style.display = 'block';
                 document.getElementById('build-sections').style.display = 'block';
+                // Cập nhật giá trị cho trường hidden trong form
+                const hiddenCharField = document.getElementById('hidden_character_id');
+                if (hiddenCharField) hiddenCharField.value = id;
+
                 setMainAvatarForAll(id);
                 // load build từ DB qua AJAX
                 fetch('?action=get_build&character_id=' + id)
@@ -352,6 +355,9 @@ $msg = $msg ?? "";
             } else {
                 avatar.style.display = 'none';
                 document.getElementById('build-sections').style.display = 'none';
+                // Reset trường hidden
+                const hiddenCharField = document.getElementById('hidden_character_id');
+                if (hiddenCharField) hiddenCharField.value = '';
             }
         }
 
@@ -505,33 +511,58 @@ $msg = $msg ?? "";
 
         // --- Di vật logic ---
         function handleRelicEffectChange(idx) {
-            const effectType = document.getElementById('relic_effect_' + idx).value;
-            const relic2set = document.getElementById('relic_2set_' + idx);
-            if (effectType === '2') {
-                relic2set.style.display = 'inline-block';
-                // Loại bỏ bộ di vật trùng lặp
-                const mainSelect = document.getElementById('relic' + idx);
-                const selectedMain = mainSelect.value;
-                for (let i = 1; i <= 3; i++) {
-                    if (i === idx) continue;
-                    const other2set = document.getElementById('relic_2set_' + i);
-                    if (other2set) {
-                        for (let opt of other2set.options) {
-                            opt.disabled = (opt.value === selectedMain && opt.value !== "");
-                        }
-                    }
-                }
-                // Disable option trùng với bộ chính
-                for (let opt of relic2set.options) {
-                    opt.disabled = (opt.value === selectedMain && opt.value !== "");
-                }
+    const effectType = document.getElementById('relic_effect_' + idx).value;
+    const relic2SetContainer = document.getElementById('relic_2set_container_' + idx);
+    const usageRateInput = document.getElementById('relic' + idx + '_rate');
+
+    if (effectType === '2') {
+        relic2SetContainer.style.display = 'block';
+        usageRateInput.disabled = true;
+        usageRateInput.value = ''; // Xóa giá trị khi bị vô hiệu hóa
+        handleRelic2SetChange(idx, 0); // Gọi để cập nhật các option
+    } else { // effectType === '4'
+        relic2SetContainer.style.display = 'none';
+        usageRateInput.disabled = false;
+        // Reset all 2-set selects
+        for (let i = 1; i <= 5; i++) {
+            const sel = document.getElementById('relic_2set_' + idx + '_' + i);
+            if (sel) sel.value = '';
+        }
+    }
+}
+
+function handleRelic2SetChange(mainIdx, selectIdx) {
+    const mainRelicValue = document.getElementById('relic' + mainIdx).value;
+    let selectedValues = [mainRelicValue];
+
+    // Thu thập tất cả các giá trị đã chọn trong hàng này
+    for (let i = 1; i <= 5; i++) {
+        const val = document.getElementById('relic_2set_' + mainIdx + '_' + i).value;
+        if (val) {
+            selectedValues.push(val);
+        }
+    }
+
+    // Cập nhật các tùy chọn cho tất cả các select trong hàng
+    for (let i = 1; i <= 5; i++) {
+        const currentSelect = document.getElementById('relic_2set_' + mainIdx + '_' + i);
+        const currentValue = currentSelect.value;
+
+        for (let opt of currentSelect.options) {
+            if (opt.value === "") continue;
+            // Vô hiệu hóa nếu giá trị đã được chọn ở nơi khác TRỪ KHI nó là giá trị hiện tại của select này
+            if (selectedValues.includes(opt.value) && opt.value !== currentValue) {
+                opt.disabled = true;
             } else {
-                relic2set.style.display = 'none';
+                opt.disabled = false;
             }
         }
+    }
+}
 
         function handleRelicMainChange(idx) {
-            handleRelicEffectChange(idx);
+            // Khi di vật chính thay đổi, cần cập nhật lại các tùy chọn cho bộ 2
+            handleRelic2SetChange(idx, 0);
         }
 
         // --- Đội hình đề xuất: Không chọn nhân vật trùng ---
@@ -651,6 +682,14 @@ $msg = $msg ?? "";
                 }
             });
         }
+
+        // Chạy khi trang tải xong để cập nhật trạng thái ban đầu
+        document.addEventListener('DOMContentLoaded', function() {
+            // Khởi tạo trạng thái hiển thị cho các hàng di vật
+            for (let i = 1; i <= 3; i++) {
+                handleRelicEffectChange(i);
+            }
+        });
     </script>
 </head>
 
@@ -661,7 +700,7 @@ $msg = $msg ?? "";
             Administrator
         </div>
         <div class="admin-nav">
-            <a href="../Trangchinh.php">Trang chủ website</a>
+            <a href="/HSR/HonkaiStarrail/Trangchinh.php">Trang chủ website</a>
             <span class="admin-user">Xin chào: admin</span>
         </div>
     </div>
@@ -681,24 +720,6 @@ $msg = $msg ?? "";
         </div>
         <div class="admin-main">
             <h1>Build Nhân vật</h1>
-
-            <?php if (!empty($msg)): ?>
-                <div class="msg msg-success"><?= htmlspecialchars($msg) ?></div>
-            <?php endif; ?>
-
-            <!-- Character select -->
-            <div class="character-select-box">
-                <img id="character-avatar-img" class="character-avatar" src="images/default.png" alt="avatar" style="display:none;">
-                <div class="search-bar">
-                    <label style="color:#fff;">Chọn nhân vật</label>
-                    <select id="characterSelect" name="character_id" onchange="onCharacterChange(this)" style="margin-top:6px;">
-                        <option value="">-- Chọn nhân vật --</option>
-                        <?php foreach ($characters as $id => $name): ?>
-                            <option value="<?= intval($id) ?>"><?= htmlspecialchars($name) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-            </div>
 
             <!-- open form and build sections -->
             <!-- Datalist cho Nón Ánh Sáng -->
@@ -721,6 +742,26 @@ $msg = $msg ?? "";
             </datalist>
 
             <form method="POST">
+                <?php if (!empty($msg)): ?>
+                    <div class="msg <?= (strpos($msg, 'thành công') !== false) ? 'msg-success' : 'msg-error' ?>"><?= htmlspecialchars($msg) ?></div>
+                <?php endif; ?>
+
+                <!-- Character select (Đã di chuyển vào trong form) -->
+                <div class="character-select-box">
+                    <img id="character-avatar-img" class="character-avatar" src="images/default.png" alt="avatar" style="display:none;">
+                    <div class="search-bar">
+                        <label style="color:#fff;">Chọn nhân vật</label>
+                        <select id="characterSelect" onchange="onCharacterChange(this)" style="margin-top:6px;">
+                            <option value="">-- Chọn nhân vật --</option>
+                            <?php foreach ($characters as $id => $name): ?>
+                                <option value="<?= intval($id) ?>"><?= htmlspecialchars($name) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+                <!-- Trường ẩn để lưu character_id và gửi đi cùng form -->
+                <input type="hidden" name="character_id" id="hidden_character_id" value="">
+
                 <div id="build-sections" style="display:none;">
                     <!-- Nón Ánh Sáng đề xuất -->
                     <div class="section-title">Nón Ánh Sáng đề xuất</div>
@@ -785,11 +826,20 @@ $msg = $msg ?? "";
                                 <td>
                                     <select id="relic_effect_<?= $i ?>" onchange="handleRelicEffectChange(<?= $i ?>)">
                                         <option value="2">Hiệu quả bộ 2</option>
-                                        <option value="4">Hiệu quả bộ 4</option>
+                                        <option value="4" selected>Hiệu quả bộ 4</option>
                                     </select>
                                 </td>
                                 <td>
-                                    <input type="text" id="relic_2set_<?= $i ?>" list="datalist-relics" placeholder="Bộ Di Vật 2" style="display:none;">
+                                    <div id="relic_2set_container_<?= $i ?>" style="display: none; display: flex; flex-direction: column; gap: 5px;">
+                                        <?php for ($j = 1; $j <= 5; $j++): ?>
+                                            <select id="relic_2set_<?= $i ?>_<?= $j ?>" onchange="handleRelic2SetChange(<?= $i ?>, <?= $j ?>)">
+                                                <option value="">-- Chọn bộ 2 --</option>
+                                                <?php foreach ($relicList as $relic): ?>
+                                                    <option value="<?= htmlspecialchars($relic) ?>"><?= htmlspecialchars($relic) ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        <?php endfor; ?>
+                                    </div>
                                 </td>
                                 <td><input type="text" id="relic<?= $i ?>_rate" placeholder="Tỉ lệ (%)" style="width:60px;"></td>
                                 <td><input type="text" id="relic<?= $i ?>_effect" placeholder="Hiệu quả (%)" style="width:80px;"></td>
@@ -1096,100 +1146,6 @@ $msg = $msg ?? "";
 }
             </script>
             <?php
-            // PHẦN 4/4 - xử lý POST lưu (INSERT nếu chưa có, UPDATE nếu có) and SQL (commented)
-
-            // Note: This block must be placed at top of file before HTML to actually process POST.
-            // In our 4-part arrangement we placed a placeholder earlier; if you want to move POST processing here,
-            // replace the earlier $msg assignment with the code below. But since we included a light POST handler earlier,
-            // below is a robust handler you can use instead of the very top.
-
-            // If you already submitted the form and want the server to save, the following code will process $_POST:
-
-            if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_build'])) {
-                $character_id = intval($_POST['character_id'] ?? 0);
-                if ($character_id <= 0) {
-                    $msg = "Vui lòng chọn nhân vật trước khi lưu.";
-                } else {
-                    // collect form values
-                    $lightcone = $_POST['lightcone'] ?? '';
-                    $relics = $_POST['relics'] ?? '';
-                    $planar = $_POST['planar'] ?? '';
-                    $main_stats = $_POST['main_stats'] ?? '';
-                    $substats = $_POST['substats_priority'] ?? '';
-                    $target_stats = $_POST['target_stats'] ?? '';
-
-                    // teams: team1_1..team10_4 (hidden inputs)
-                    $teams = [];
-                    for ($t = 1; $t <= 10; $t++) {
-                        for ($s = 1; $s <= 4; $s++) {
-                            $col = "team{$t}_{$s}";
-                            $teams[$col] = $_POST[$col] ?? '';
-                        }
-                    }
-
-                    // check exists
-                    $stmt = $conn->prepare("SELECT id FROM builds WHERE character_id = ? LIMIT 1");
-                    $stmt->bind_param("i", $character_id);
-                    $stmt->execute();
-                    $res = $stmt->get_result();
-                    $exist = $res->fetch_assoc();
-                    if ($exist) {
-                        // UPDATE row - keep character_id unique
-                        $id = (int)$exist['id'];
-                        // build set clause
-                        $setParts = [
-                            "`lightcone` = ?",
-                            "`relics` = ?",
-                            "`planar` = ?",
-                            "`main_stats` = ?",
-                            "`substats_priority` = ?",
-                            "`target_stats` = ?"
-                        ];
-                        $bindVals = [$lightcone, $relics, $planar, $main_stats, $substats, $target_stats];
-                        // add teams columns
-                        foreach ($teams as $col => $val) {
-                            $setParts[] = "`$col` = ?";
-                            $bindVals[] = $val;
-                        }
-                        $sql = "UPDATE builds SET " . implode(", ", $setParts) . " WHERE id = ?";
-                        $bindVals[] = $id;
-                        // bind types
-                        $types = str_repeat("s", count($bindVals) - 1) . "i";
-                        $stmt = $conn->prepare($sql);
-                        $refs = [];
-                        $refs[] = &$types;
-                        foreach ($bindVals as $k => $v) $refs[] = &$bindVals[$k];
-                        call_user_func_array([$stmt, 'bind_param'], $refs);
-                        $ok = $stmt->execute();
-                        $msg = $ok ? "Cập nhật build thành công." : "Lỗi khi cập nhật: " . $stmt->error;
-                    } else {
-                        // INSERT new row
-                        $cols = ["character_id", "lightcone", "relics", "planar", "main_stats", "substats_priority", "target_stats"];
-                        $vals = [$character_id, $lightcone, $relics, $planar, $main_stats, $substats, $target_stats];
-                        foreach ($teams as $col => $val) {
-                            $cols[] = $col;
-                            $vals[] = $val;
-                        }
-                        $placeholders = implode(", ", array_fill(0, count($cols), '?'));
-                        $colList = implode(", ", array_map(function ($c) {
-                            return "`$c`";
-                        }, $cols));
-                        $sql = "INSERT INTO builds ($colList) VALUES ($placeholders)";
-                        $types = str_repeat("s", count($vals));
-                        // first value is integer (character_id) - change first type to i
-                        $types = 'i' . substr($types, 1);
-                        $stmt = $conn->prepare($sql);
-                        $refs = [];
-                        $refs[] = &$types;
-                        foreach ($vals as $k => $v) $refs[] = &$vals[$k];
-                        call_user_func_array([$stmt, 'bind_param'], $refs);
-                        $ok = $stmt->execute();
-                        $msg = $ok ? "Lưu build mới thành công." : "Lỗi khi lưu: " . $stmt->error;
-                    }
-                }
-            }
-            // END POST processing
-
             // ---------- SQL to create builds table (run once in your DB) ----------
             /*
 CREATE TABLE `builds` (

@@ -41,8 +41,8 @@ CREATE TABLE `admin` (
 
 CREATE TABLE `builds` (
   `id` int(11) NOT NULL,
-  `character_name` varchar(100) NOT NULL,
-  `lightcone1` varchar(100) DEFAULT NULL,
+  `character_id` int(11) NOT NULL,
+  `lightcone` text DEFAULT NULL,
   `lightcone1_rate` int(11) DEFAULT NULL,
   `lightcone2` varchar(100) DEFAULT NULL,
   `lightcone2_rate` int(11) DEFAULT NULL,
@@ -50,7 +50,7 @@ CREATE TABLE `builds` (
   `lightcone3_rate` int(11) DEFAULT NULL,
   `lightcone4` varchar(100) DEFAULT NULL,
   `lightcone4_rate` int(11) DEFAULT NULL,
-  `relic1_set` varchar(100) DEFAULT NULL,
+  `relics` text DEFAULT NULL,
   `relic1_effect` enum('2','4') DEFAULT NULL,
   `relic1_2set` varchar(100) DEFAULT NULL,
   `relic1_rate` int(11) DEFAULT NULL,
@@ -66,18 +66,16 @@ CREATE TABLE `builds` (
   `relic4_effect` enum('2','4') DEFAULT NULL,
   `relic4_2set` varchar(100) DEFAULT NULL,
   `relic4_rate` int(11) DEFAULT NULL,
-  `ornament1` varchar(100) DEFAULT NULL,
+  `planar` text DEFAULT NULL,
   `ornament1_rate` int(11) DEFAULT NULL,
   `ornament2` varchar(100) DEFAULT NULL,
   `ornament2_rate` int(11) DEFAULT NULL,
   `ornament3` varchar(100) DEFAULT NULL,
   `ornament3_rate` int(11) DEFAULT NULL,
-  `mainstat_body` varchar(50) DEFAULT NULL,
-  `mainstat_boots` varchar(50) DEFAULT NULL,
-  `mainstat_sphere` varchar(50) DEFAULT NULL,
-  `mainstat_rope` varchar(50) DEFAULT NULL,
-  `substats` text DEFAULT NULL,
+  `main_stats` text DEFAULT NULL,
+  `substats_priority` text DEFAULT NULL,
   `target_stats` text DEFAULT NULL,
+  `team1_1` varchar(150) DEFAULT NULL,
   `team1_1` varchar(100) DEFAULT NULL,
   `team1_2` varchar(100) DEFAULT NULL,
   `team1_3` varchar(100) DEFAULT NULL,
@@ -118,7 +116,8 @@ CREATE TABLE `builds` (
   `team10_2` varchar(100) DEFAULT NULL,
   `team10_3` varchar(100) DEFAULT NULL,
   `team10_4` varchar(100) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -603,7 +602,8 @@ ALTER TABLE `admin`
 -- Chỉ mục cho bảng `builds`
 --
 ALTER TABLE `builds`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `character_id` (`character_id`);
 
 --
 -- Chỉ mục cho bảng `characters`
@@ -738,6 +738,12 @@ ALTER TABLE `teams`
   ADD CONSTRAINT `teams_ibfk_3` FOREIGN KEY (`character3_id`) REFERENCES `characters` (`id`),
   ADD CONSTRAINT `teams_ibfk_4` FOREIGN KEY (`character4_id`) REFERENCES `characters` (`id`);
 COMMIT;
+
+--
+-- Các ràng buộc cho bảng `builds`
+--
+ALTER TABLE `builds`
+  ADD CONSTRAINT `builds_ibfk_1` FOREIGN KEY (`character_id`) REFERENCES `characters` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
