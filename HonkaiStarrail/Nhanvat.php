@@ -12,32 +12,12 @@ $elements = [];
 $pathRes = $conn->query("SELECT id, path FROM paths ORDER BY path ASC");
 $elementRes = $conn->query("SELECT id, element FROM elements ORDER BY element ASC");
 
-while ($row = $pathRes->fetch_assoc()) $paths[] = $row["path"];
-while ($row = $elementRes->fetch_assoc()) $elements[] = $row["element"];
-
-// --- Xử lý lọc ---
-$conditions = [];
-$params = [];
-$types = "";
-
-$vanmenh = $_GET["vanmenh"] ?? "";
-$thuoctinh = $_GET["thuoc_tinh"] ?? "";
-
-if (!empty($vanmenh)) {
-    $conditions[] = "p.path = ?";
-    $params[] = $vanmenh;
-    $types .= "s";
-}
-if (!empty($thuoctinh)) {
-    $conditions[] = "e.element = ?";
-    $params[] = $thuoctinh;
-    $types .= "s";
-}
-
-$whereSQL = "";
-if (!empty($conditions)) $whereSQL = "WHERE " . implode(" AND ", $conditions);
+while ($row = $pathRes->fetch_assoc()) $paths[] = $row;
+while ($row = $elementRes->fetch_assoc()) $elements[] = $row;
 
 // --- Query lấy danh sách nhân vật ---
+// Bỏ qua logic lọc phía máy chủ để lấy tất cả nhân vật.
+// JavaScript sẽ xử lý việc lọc ở phía client.
 $sql = "
     SELECT 
         c.*, 
@@ -48,14 +28,12 @@ $sql = "
     FROM characters c
     JOIN paths p ON c.path_id = p.id
     JOIN elements e ON c.element_id = e.id
-    $whereSQL
     ORDER BY c.name ASC
 ";
 $stmt = $conn->prepare($sql);
 if ($stmt === false) {
     die("Lỗi chuẩn bị truy vấn: " . $conn->error);
 }
-if (!empty($params)) $stmt->bind_param($types, ...$params);
 $stmt->execute();
 $result = $stmt->get_result();
 ?>
@@ -148,20 +126,26 @@ $result = $stmt->get_result();
             gap: 18px;
             flex-wrap: wrap;
         }
-
-        .filter-box label {
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-grow: 1;
+        }
+        .filter-group label {
             font-weight: bold;
             color: #333;
             font-size: 0.9em;
-            margin-right: -10px;
         }
-
-        .filter-box select,
-        .filter-box button {
+        .filter-group select, .filter-group input {
             padding: 10px 15px;
             border: 1px solid #ddd;
             border-radius: 6px;
             font-size: 1em;
+            width: 100%;
+        }
+        .filter-box input[type="text"] {
+            min-width: 250px;
         }
 
         .filter-box button {
@@ -271,7 +255,7 @@ $result = $stmt->get_result();
 <body>
 
     <aside class="sidebar">
-        <div class="sidebar-header">HoYoWiki</div>
+        <div class="sidebar-header">Star Rail Wiki</div>
         <nav class="sidebar-nav">
             <ul>
                 <li><a href="Trangchinh.php">Trang Chủ</a></li>
@@ -287,39 +271,41 @@ $result = $stmt->get_result();
         <h2>Danh sách Nhân Vật Honkai Star Rail</h2>
 
         <!-- FORM LỌC -->
-        <form method="get" class="filter-box">
-            
-            <label for="vanmenh">Vận Mệnh:</label>
-            <select name="vanmenh" id="vanmenh">
-                <option value="">Tất cả</option>
-                <?php foreach ($paths as $p): ?>
-                    <option value="<?= htmlspecialchars($p) ?>"
-                        <?= ($vanmenh === $p) ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($p) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-
-            <label for="thuoc_tinh">Thuộc Tính:</label>
-            <select name="thuoc_tinh" id="thuoc_tinh">
-                <option value="">Tất cả</option>
-                <?php foreach ($elements as $e): ?>
-                    <option value="<?= htmlspecialchars($e) ?>"
-                        <?= ($thuoctinh === $e) ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($e) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-
-            <button type="submit">Lọc</button>
-        </form>
+        <div class="filter-box">
+            <div class="filter-group">
+                <label for="search-text">Tìm kiếm theo tên</label>
+                <input type="text" id="search-text" placeholder="Nhập tên nhân vật...">
+            </div>
+            <div class="filter-group">
+                <label for="filter-path">Vận Mệnh</label>
+                <select id="filter-path">
+                    <option value="">Tất cả</option>
+                    <?php foreach ($paths as $p): ?>
+                        <option value="<?= htmlspecialchars($p['path']) ?>">
+                            <?= htmlspecialchars($p['path']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filter-element">Thuộc Tính</label>
+                <select id="filter-element">
+                    <option value="">Tất cả</option>
+                    <?php foreach ($elements as $e): ?>
+                        <option value="<?= htmlspecialchars($e['element']) ?>">
+                            <?= htmlspecialchars($e['element']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
         <!-- GRID HIỂN THỊ NHÂN VẬT -->
         <div class="character-grid">
 
         <?php if ($result && $result->num_rows > 0): ?>
             <?php while ($char = $result->fetch_assoc()): ?>
 
-                <div class="character-card">
+                <div class="character-card" data-name="<?= strtolower(htmlspecialchars($char['name'])) ?>" data-path="<?= htmlspecialchars($char['path_name']) ?>" data-element="<?= htmlspecialchars($char['element_name']) ?>">
 
                     <!-- ẢNH NHÂN VẬT -->
                     <img class="avatar"
@@ -375,11 +361,52 @@ $result = $stmt->get_result();
             <?php endwhile; ?>
 
         <?php else: ?>
-            <p>Không có nhân vật nào phù hợp.</p>
+            <p style="text-align: center;">Không có nhân vật nào trong cơ sở dữ liệu.</p>
         <?php endif; ?>
 
         </div> <!-- END GRID -->
+        <p id="no-results" style="text-align: center; display: none; margin-top: 20px;">Không tìm thấy nhân vật nào phù hợp.</p>
     </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('search-text');
+            const pathFilter = document.getElementById('filter-path');
+            const elementFilter = document.getElementById('filter-element');
+            const characterCards = document.querySelectorAll('.character-card');
+            const noResultsMessage = document.getElementById('no-results');
+
+            function filterCharacters() {
+                const searchText = searchInput.value.toLowerCase().trim();
+                const selectedPath = pathFilter.value;
+                const selectedElement = elementFilter.value;
+                let visibleCount = 0;
+
+                characterCards.forEach(card => {
+                    const cardName = card.getAttribute('data-name');
+                    const cardPath = card.getAttribute('data-path');
+                    const cardElement = card.getAttribute('data-element');
+
+                    const nameMatch = cardName.includes(searchText);
+                    const pathMatch = selectedPath === '' || cardPath === selectedPath;
+                    const elementMatch = selectedElement === '' || cardElement === selectedElement;
+
+                    if (nameMatch && pathMatch && elementMatch) {
+                        card.style.display = 'flex';
+                        visibleCount++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                noResultsMessage.style.display = (visibleCount === 0) ? 'block' : 'none';
+            }
+
+            searchInput.addEventListener('input', filterCharacters);
+            pathFilter.addEventListener('change', filterCharacters);
+            elementFilter.addEventListener('change', filterCharacters);
+        });
+    </script>
 
 <?php 
 $stmt->close(); 

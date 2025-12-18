@@ -6,10 +6,6 @@ if ($conn->connect_error) {
 }
 $conn->set_charset("utf8mb4");
 
-// 2. Lấy các giá trị lọc từ URL (nếu có)
-$selected_rarity = isset($_GET['rarity']) ? $_GET['rarity'] : '';
-$selected_path_id = isset($_GET['path_id']) ? $_GET['path_id'] : '';
-
 // 3. Lấy danh sách Vận mệnh để hiển thị trong bộ lọc
 $paths_result = $conn->query("SELECT id, path FROM paths ORDER BY path ASC");
 $paths = [];
@@ -19,7 +15,8 @@ if ($paths_result->num_rows > 0) {
     }
 }
 
-// 4. Xây dựng câu truy vấn SQL động dựa trên bộ lọc
+// 4. Xây dựng câu truy vấn SQL để lấy tất cả dữ liệu.
+// Việc lọc sẽ được xử lý bởi JavaScript ở phía client.
 $sql = "
     SELECT 
         lc.*, 
@@ -28,36 +25,12 @@ $sql = "
     FROM lightcones lc
     LEFT JOIN paths p ON lc.path_id = p.id";
 
-$conditions = [];
-$params = [];
-$types = '';
-
-if ($selected_rarity !== '') {
-    $conditions[] = "lc.rarity = ?";
-    $params[] = $selected_rarity;
-    $types .= 'i';
-}
-
-if ($selected_path_id !== '') {
-    $conditions[] = "lc.path_id = ?";
-    $params[] = $selected_path_id;
-    $types .= 'i';
-}
-
-if (count($conditions) > 0) {
-    $sql .= " WHERE " . implode(" AND ", $conditions);
-}
-
 $sql .= " ORDER BY lc.rarity DESC, lc.name ASC";
 
 // 5. Sử dụng Prepared Statement để thực thi truy vấn an toàn
 $stmt = $conn->prepare($sql);
 if ($stmt === false) {
     die("Lỗi chuẩn bị truy vấn: " . $conn->error);
-}
-
-if ($types !== '') {
-    $stmt->bind_param($types, ...$params);
 }
 
 $stmt->execute();
@@ -154,6 +127,7 @@ $result = $stmt->get_result();
         .filter-group {
             display: flex;
             flex-direction: column;
+            flex-grow: 1;
             gap: 8px;
         }
 
@@ -162,12 +136,22 @@ $result = $stmt->get_result();
             color: #333;
             font-size: 0.9em;
         }
+        .filter-group input[type="text"] {
+            min-width: 250px;
+        }
 
-        .filter-group select, .filter-container button {
+        .filter-group select, .filter-group input, .filter-container button {
             padding: 10px 15px;
             border: 1px solid #ddd;
             border-radius: 6px;
             font-size: 1em;
+            width: 100%; /* Đảm bảo input cũng chiếm toàn bộ chiều rộng của group */
+        }
+
+        .filter-container button {
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
         }
 
         .lightcone-grid {
@@ -301,10 +285,10 @@ $result = $stmt->get_result();
 <body>
 
     <aside class="sidebar">
-        <div class="sidebar-header">HoYoWiki</div>
+        <div class="sidebar-header">Star Rail Wiki</div>
         <nav class="sidebar-nav">
             <ul>
-                <li><a href="Trangchinh.php">Trang Chủ</a></li>
+                
                 <li><a href="Nhanvat.php">Nhân Vật</a></li>
                 <li><a href="Nonanhsang.php">Nón Ánh Sáng</a></li>
                 <li><a href="Divat.php">Di Vật</a></li>
@@ -318,36 +302,40 @@ $result = $stmt->get_result();
 
         <!-- Filter Form -->
         <div class="filter-container">
-            <form method="GET" action="" style="display: flex; gap: 20px; align-items: flex-end;">
-                <div class="filter-group">
-                    <label for="rarity">Độ hiếm</label>
-                    <select name="rarity" id="rarity">
-                        <option value="">Tất cả</option>
-                        <option value="5" <?php if ($selected_rarity == '5') echo 'selected'; ?>>5 ★</option>
-                        <option value="4" <?php if ($selected_rarity == '4') echo 'selected'; ?>>4 ★</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label for="path_id">Vận mệnh</label>
-                    <select name="path_id" id="path_id">
-                        <option value="">Tất cả</option>
-                        <?php foreach ($paths as $path): ?>
-                            <option value="<?php echo $path['id']; ?>" <?php if ($selected_path_id == $path['id']) echo 'selected'; ?>><?php echo htmlspecialchars($path['path']); ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <button type="submit">Lọc</button>
-            </form>
+            <div class="filter-group">
+                <label for="search-text">Tìm kiếm theo tên</label>
+                <input type="text" id="search-text" placeholder="Nhập tên nón ánh sáng...">
+            </div>
+            <div class="filter-group">
+                <label for="filter-rarity">Độ hiếm</label>
+                <select id="filter-rarity">
+                    <option value="">Tất cả</option>
+                    <option value="5">5 ★</option>
+                    <option value="4">4 ★</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filter-path">Vận mệnh</label>
+                <select id="filter-path">
+                    <option value="">Tất cả</option>
+                    <?php foreach ($paths as $path): ?>
+                        <option value="<?php echo $path['id']; ?>"><?php echo htmlspecialchars($path['path']); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
         </div>
 
         <div class="lightcone-grid">
             <?php if ($result->num_rows > 0): ?>
                 <?php while ($lc = $result->fetch_assoc()): ?>
                     <?php
-                        // Xác định class CSS cho nền dựa trên độ hiếm
                         $rarity_bg_class = 'rarity-bg-' . htmlspecialchars($lc['rarity']);
                     ?>
-                    <div class="lightcone-card">
+                    <div class="lightcone-card" 
+                         data-name="<?php echo strtolower(htmlspecialchars($lc['name'])); ?>" 
+                         data-rarity="<?php echo htmlspecialchars($lc['rarity']); ?>" 
+                         data-path="<?php echo htmlspecialchars($lc['path_id']); ?>"
+                    >
                         <!-- Hình ảnh bên trái -->
                         <div class="image-container <?php echo $rarity_bg_class; ?>">
                             <img class="lightcone-image" src="HonkaiStarrail/admin/uploads/lightcones/<?php echo htmlspecialchars($lc['image']); ?>" alt="<?php echo htmlspecialchars($lc['name']); ?>">
@@ -388,10 +376,51 @@ $result = $stmt->get_result();
                     </div>
                 <?php endwhile; ?>
             <?php else: ?>
-                <p>Không có Nón Ánh Sáng nào trong cơ sở dữ liệu.</p>
+                <p style="text-align: center;">Không có Nón Ánh Sáng nào trong cơ sở dữ liệu.</p>
             <?php endif; ?>
         </div>
+        <p id="no-results" style="text-align: center; display: none; margin-top: 20px;">Không tìm thấy Nón Ánh Sáng nào phù hợp.</p>
     </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('search-text');
+            const rarityFilter = document.getElementById('filter-rarity');
+            const pathFilter = document.getElementById('filter-path');
+            const lightconeCards = document.querySelectorAll('.lightcone-card');
+            const noResultsMessage = document.getElementById('no-results');
+
+            function filterLightCones() {
+                const searchText = searchInput.value.toLowerCase().trim();
+                const selectedRarity = rarityFilter.value;
+                const selectedPath = pathFilter.value;
+                let visibleCount = 0;
+
+                lightconeCards.forEach(card => {
+                    const cardName = card.getAttribute('data-name');
+                    const cardRarity = card.getAttribute('data-rarity');
+                    const cardPath = card.getAttribute('data-path');
+
+                    const nameMatch = cardName.includes(searchText);
+                    const rarityMatch = selectedRarity === '' || cardRarity === selectedRarity;
+                    const pathMatch = selectedPath === '' || cardPath === selectedPath;
+
+                    if (nameMatch && rarityMatch && pathMatch) {
+                        card.style.display = 'flex';
+                        visibleCount++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                noResultsMessage.style.display = (visibleCount === 0) ? 'block' : 'none';
+            }
+
+            searchInput.addEventListener('input', filterLightCones);
+            rarityFilter.addEventListener('change', filterLightCones);
+            pathFilter.addEventListener('change', filterLightCones);
+        });
+    </script>
 
 <?php 
 $stmt->close();

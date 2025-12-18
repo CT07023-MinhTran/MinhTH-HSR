@@ -226,7 +226,7 @@ if (!$db_error) {
 <body>
 
     <aside class="sidebar">
-        <div class="sidebar-header">HoYoWiki</div>
+        <div class="sidebar-header">Star Rail Wiki</div>
         <nav class="sidebar-nav">
             <ul>
                 <li><a href="Trangchinh.php">Trang Chủ</a></li>
