@@ -304,6 +304,7 @@ $result = $stmt->get_result();
         <div class="sidebar-header">HoYoWiki</div>
         <nav class="sidebar-nav">
             <ul>
+                <li><a href="Trangchinh.php">Trang Chủ</a></li>
                 <li><a href="Nhanvat.php">Nhân Vật</a></li>
                 <li><a href="Nonanhsang.php">Nón Ánh Sáng</a></li>
                 <li><a href="Divat.php">Di Vật</a></li>

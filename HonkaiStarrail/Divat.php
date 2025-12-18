@@ -226,6 +226,7 @@ $result = $stmt->get_result();
         <div class="sidebar-header">HoYoWiki</div>
         <nav class="sidebar-nav">
             <ul>
+                <li><a href="Trangchinh.php">Trang Chủ</a></li>
                 <li><a href="Nhanvat.php">Nhân Vật</a></li>
                 <li><a href="Nonanhsang.php">Nón Ánh Sáng</a></li>
                 <li><a href="Divat.php">Di Vật</a></li>
@@ -259,7 +260,7 @@ $result = $stmt->get_result();
                     <div class="relic-card" data-name="<?php echo strtolower(htmlspecialchars($relic['name'])); ?>" data-type="<?php echo htmlspecialchars($relic['type']); ?>">
                         <!-- Hình ảnh bên trái -->
                         <div class="image-container">
-                            <img class="relic-image" src="HonkaiStarrail/admin/uploads/relics/<?php echo htmlspecialchars($relic['icon']); ?>" alt="<?php echo htmlspecialchars($relic['name']); ?>">
+                            <img class="relic-image" src="HonkaiStarrail/admin/uploads/relics/<?php echo htmlspecialchars(urlencode($relic['icon'])); ?>" alt="<?php echo htmlspecialchars($relic['name']); ?>">
                         </div>
 
                         <!-- Thông tin bên phải -->
