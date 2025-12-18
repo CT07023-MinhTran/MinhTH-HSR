@@ -69,13 +69,68 @@ $result = $stmt->get_result();
     <meta charset="UTF-8">
     <title>Danh sách Nón Ánh Sáng - Honkai Star Rail</title>
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            background: #f0f2f5; 
-            padding: 20px;
-            color: #333;
+        :root {
+            --primary-color: #1e3a56;
+            --secondary-color: #f0f2f5;
+            --text-color: #333;
+            --sidebar-bg: #fff;
+            --sidebar-width: 240px;
         }
 
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body { 
+            font-family: Arial, sans-serif; 
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            display: flex;
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: var(--sidebar-bg);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .sidebar-nav ul { list-style: none; }
+        .sidebar-nav li { margin-bottom: 15px; }
+        .sidebar-nav a {
+            text-decoration: none;
+            color: var(--text-color);
+            font-size: 1.1em;
+            padding: 10px 15px;
+            display: block;
+            border-radius: 8px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .sidebar-nav a:hover { background-color: var(--primary-color); color: #fff; }
+
+        /* --- Main Content --- */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            padding: 40px;
+        }
         h2 { 
             text-align: center;
             margin-bottom: 30px; 
@@ -84,7 +139,7 @@ $result = $stmt->get_result();
 
         /* Filter Form Styles */
         .filter-container {
-            max-width: 1200px;
+            max-width: 100%;
             margin: 0 auto 30px auto;
             background: #fff;
             padding: 20px;
@@ -118,8 +173,8 @@ $result = $stmt->get_result();
         .lightcone-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(550px, 1fr));
-            gap: 24px;
-            max-width: 1200px;
+            gap: 24px;            
+            max-width: 100%;
             margin: 0 auto;
         }
 
@@ -227,90 +282,115 @@ $result = $stmt->get_result();
         .stat-label { font-weight: bold; font-size: 0.9em; color: #666; }
         .stat-value { font-size: 1.1em; font-weight: 500; }
 
-        @media (max-width: 600px) {
+        @media (max-width: 900px) {
+            .sidebar { display: none; }
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 20px;
+            }
             .lightcone-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 600px) {
+            .lightcone-card { flex-direction: column; }
+            .image-container { width: 120px; height: 120px; margin: 0 auto; }
         }
     </style>
 </head>
 <body>
 
-<h2>Danh sách Nón Ánh Sáng</h2>
+    <aside class="sidebar">
+        <div class="sidebar-header">HoYoWiki</div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="Nhanvat.php">Nhân Vật</a></li>
+                <li><a href="Nonanhsang.php">Nón Ánh Sáng</a></li>
+                <li><a href="Divat.php">Di Vật</a></li>
+                <li><a href="tierlist.php">Tier List</a></li>
+            </ul>
+        </nav>
+    </aside>
 
-<!-- Filter Form -->
-<div class="filter-container">
-    <form method="GET" action="" style="display: flex; gap: 20px; align-items: flex-end;">
-        <div class="filter-group">
-            <label for="rarity">Độ hiếm</label>
-            <select name="rarity" id="rarity">
-                <option value="">Tất cả</option>
-                <option value="5" <?php if ($selected_rarity == '5') echo 'selected'; ?>>5 ★</option>
-                <option value="4" <?php if ($selected_rarity == '4') echo 'selected'; ?>>4 ★</option>
-            </select>
-        </div>
-        <div class="filter-group">
-            <label for="path_id">Vận mệnh</label>
-            <select name="path_id" id="path_id">
-                <option value="">Tất cả</option>
-                <?php foreach ($paths as $path): ?>
-                    <option value="<?php echo $path['id']; ?>" <?php if ($selected_path_id == $path['id']) echo 'selected'; ?>><?php echo htmlspecialchars($path['path']); ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-        <button type="submit">Lọc</button>
-    </form>
-</div>
+    <main class="main-content">
+        <h2>Danh sách Nón Ánh Sáng</h2>
 
-<div class="lightcone-grid">
-    <?php if ($result->num_rows > 0): ?>
-        <?php while ($lc = $result->fetch_assoc()): ?>
-            <?php
-                // Xác định class CSS cho nền dựa trên độ hiếm
-                $rarity_bg_class = 'rarity-bg-' . htmlspecialchars($lc['rarity']);
-            ?>
-            <div class="lightcone-card">
-                <!-- Hình ảnh bên trái -->
-                <div class="image-container <?php echo $rarity_bg_class; ?>">
-                    <img class="lightcone-image" src="HonkaiStarrail/admin/uploads/lightcones/<?php echo htmlspecialchars($lc['image']); ?>" alt="<?php echo htmlspecialchars($lc['name']); ?>">
+        <!-- Filter Form -->
+        <div class="filter-container">
+            <form method="GET" action="" style="display: flex; gap: 20px; align-items: flex-end;">
+                <div class="filter-group">
+                    <label for="rarity">Độ hiếm</label>
+                    <select name="rarity" id="rarity">
+                        <option value="">Tất cả</option>
+                        <option value="5" <?php if ($selected_rarity == '5') echo 'selected'; ?>>5 ★</option>
+                        <option value="4" <?php if ($selected_rarity == '4') echo 'selected'; ?>>4 ★</option>
+                    </select>
                 </div>
+                <div class="filter-group">
+                    <label for="path_id">Vận mệnh</label>
+                    <select name="path_id" id="path_id">
+                        <option value="">Tất cả</option>
+                        <?php foreach ($paths as $path): ?>
+                            <option value="<?php echo $path['id']; ?>" <?php if ($selected_path_id == $path['id']) echo 'selected'; ?>><?php echo htmlspecialchars($path['path']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <button type="submit">Lọc</button>
+            </form>
+        </div>
 
-                <!-- Thông tin bên phải -->
-                <div class="info-container">
-                    <!-- Ô trên: Tên, Vận mệnh, Độ hiếm -->
-                    <div class="info-header">
-                        <h3><?php echo htmlspecialchars($lc['name']); ?></h3>
-                        <div class="path-info">
-                            <img class="path-icon" src="HonkaiStarrail/admin/uploads/paths/<?php echo htmlspecialchars($lc['path_icon']); ?>" title="<?php echo htmlspecialchars($lc['path_name']); ?>">
-                            <span><?php echo htmlspecialchars($lc['path_name']); ?></span>
-                            <div class="rarity-stars">
-                                <?php
-                                $rarity = intval($lc['rarity']);
-                                $star_class = "star star-" . $rarity;
-                                for ($i = 0; $i < $rarity; $i++) {
-                                    echo '<span class="' . $star_class . '">&#9733;</span>';
-                                }
-                                ?>
+        <div class="lightcone-grid">
+            <?php if ($result->num_rows > 0): ?>
+                <?php while ($lc = $result->fetch_assoc()): ?>
+                    <?php
+                        // Xác định class CSS cho nền dựa trên độ hiếm
+                        $rarity_bg_class = 'rarity-bg-' . htmlspecialchars($lc['rarity']);
+                    ?>
+                    <div class="lightcone-card">
+                        <!-- Hình ảnh bên trái -->
+                        <div class="image-container <?php echo $rarity_bg_class; ?>">
+                            <img class="lightcone-image" src="HonkaiStarrail/admin/uploads/lightcones/<?php echo htmlspecialchars($lc['image']); ?>" alt="<?php echo htmlspecialchars($lc['name']); ?>">
+                        </div>
+
+                        <!-- Thông tin bên phải -->
+                        <div class="info-container">
+                            <!-- Ô trên: Tên, Vận mệnh, Độ hiếm -->
+                            <div class="info-header">
+                                <h3><?php echo htmlspecialchars($lc['name']); ?></h3>
+                                <div class="path-info">
+                                    <img class="path-icon" src="HonkaiStarrail/admin/uploads/paths/<?php echo htmlspecialchars($lc['path_icon']); ?>" title="<?php echo htmlspecialchars($lc['path_name']); ?>">
+                                    <span><?php echo htmlspecialchars($lc['path_name']); ?></span>
+                                    <div class="rarity-stars">
+                                        <?php
+                                        $rarity = intval($lc['rarity']);
+                                        $star_class = "star star-" . $rarity;
+                                        for ($i = 0; $i < $rarity; $i++) {
+                                            echo '<span class="' . $star_class . '">&#9733;</span>';
+                                        }
+                                        ?>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Ô giữa: Hiệu ứng -->
+                            <div class="path-effect">
+                                <?php echo nl2br(htmlspecialchars($lc['path_effect'])); ?>
+                            </div>
+
+                            <!-- Ô dưới: Chỉ số -->
+                            <div class="stats-footer">
+                                <div class="stat"><span class="stat-label">HP:</span> <span class="stat-value"><?php echo htmlspecialchars($lc['hp']); ?></span></div>
+                                <div class="stat"><span class="stat-label">ATK:</span> <span class="stat-value"><?php echo htmlspecialchars($lc['atk']); ?></span></div>
+                                <div class="stat"><span class="stat-label">DEF:</span> <span class="stat-value"><?php echo htmlspecialchars($lc['def']); ?></span></div>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Ô giữa: Hiệu ứng -->
-                    <div class="path-effect">
-                        <?php echo nl2br(htmlspecialchars($lc['path_effect'])); ?>
-                    </div>
-
-                    <!-- Ô dưới: Chỉ số -->
-                    <div class="stats-footer">
-                        <div class="stat"><span class="stat-label">HP:</span> <span class="stat-value"><?php echo htmlspecialchars($lc['hp']); ?></span></div>
-                        <div class="stat"><span class="stat-label">ATK:</span> <span class="stat-value"><?php echo htmlspecialchars($lc['atk']); ?></span></div>
-                        <div class="stat"><span class="stat-label">DEF:</span> <span class="stat-value"><?php echo htmlspecialchars($lc['def']); ?></span></div>
-                    </div>
-                </div>
-            </div>
-        <?php endwhile; ?>
-    <?php else: ?>
-        <p>Không có Nón Ánh Sáng nào trong cơ sở dữ liệu.</p>
-    <?php endif; ?>
-</div>
+                <?php endwhile; ?>
+            <?php else: ?>
+                <p>Không có Nón Ánh Sáng nào trong cơ sở dữ liệu.</p>
+            <?php endif; ?>
+        </div>
+    </main>
 
 <?php 
 $stmt->close();

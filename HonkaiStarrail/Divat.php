@@ -33,12 +33,69 @@ $result = $stmt->get_result();
     <meta charset="UTF-8">
     <title>Danh sách Di Vật - Honkai Star Rail</title>
     <style>
+        :root {
+            --primary-color: #1e3a56;
+            --secondary-color: #f0f2f5;
+            --text-color: #333;
+            --sidebar-bg: #fff;
+            --sidebar-width: 240px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: Arial, sans-serif;
-            background: #f0f2f5;
-            padding: 20px;
-            color: #333;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            display: flex;
         }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: var(--sidebar-bg);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .sidebar-nav ul { list-style: none; }
+        .sidebar-nav li { margin-bottom: 15px; }
+        .sidebar-nav a {
+            text-decoration: none;
+            color: var(--text-color);
+            font-size: 1.1em;
+            padding: 10px 15px;
+            display: block;
+            border-radius: 8px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .sidebar-nav a:hover { background-color: var(--primary-color); color: #fff; }
+
+        /* --- Main Content --- */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            padding: 40px;
+        }
+
         h2 {
             text-align: center;
             margin-bottom: 30px;
@@ -46,7 +103,7 @@ $result = $stmt->get_result();
         }
         /* Filter Form Styles */
         .filter-container {
-            max-width: 1200px;
+            max-width: 100%;
             margin: 0 auto 30px auto;
             background: #fff;
             padding: 20px;
@@ -80,7 +137,7 @@ $result = $stmt->get_result();
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(550px, 1fr));
             gap: 24px;
-            max-width: 1200px;
+            max-width: 100%;
             margin: 0 auto;
         }
         .relic-card {
@@ -149,78 +206,90 @@ $result = $stmt->get_result();
             margin-bottom: 5px;
         }
         @media (max-width: 600px) {
-            .relic-grid { grid-template-columns: 1fr; }
             .relic-card { flex-direction: column; }
             .image-container { width: 120px; height: 120px; margin: 0 auto; }
+        }
+        @media (max-width: 900px) {
+            .sidebar { display: none; }
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 20px;
+            }
+            .relic-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 
-    <h2>Danh sách Di Vật</h2>
+    <aside class="sidebar">
+        <div class="sidebar-header">HoYoWiki</div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="Nhanvat.php">Nhân Vật</a></li>
+                <li><a href="Nonanhsang.php">Nón Ánh Sáng</a></li>
+                <li><a href="Divat.php">Di Vật</a></li>
+                <li><a href="tierlist.php">Tier List</a></li>
+            </ul>
+        </nav>
+    </aside>
 
-    <!-- Filter and Search Form -->
-    <div class="filter-container">
-        <div class="filter-group">
-            <label for="search-text">Tìm kiếm theo tên</label>
-            <input type="text" id="search-text" placeholder="Nhập tên di vật...">
+    <main class="main-content">
+        <h2>Danh sách Di Vật</h2>
+
+        <!-- Filter and Search Form -->
+        <div class="filter-container">
+            <div class="filter-group">
+                <label for="search-text">Tìm kiếm theo tên</label>
+                <input type="text" id="search-text" placeholder="Nhập tên di vật...">
+            </div>
+            <div class="filter-group">
+                <label for="filter-type">Loại</label>
+                <select id="filter-type">
+                    <option value="">Tất cả</option>
+                    <option value="Relic">Di Vật</option>
+                    <option value="Planetary Ornament Set">Phụ Kiện Vị Diện</option>
+                </select>
+            </div>
         </div>
-        <div class="filter-group">
-            <label for="filter-type">Loại</label>
-            <select id="filter-type">
-                <option value="">Tất cả</option>
-                <option value="Relic">Di Vật</option>
-                <option value="Planetary Ornament Set">Phụ Kiện Vị Diện</option>
-            </select>
-        </div>
-    </div>
 
-    <?php if ($result && $result->num_rows > 0): ?>
-        <div class="relic-grid">
-            <?php while($relic = $result->fetch_assoc()): ?>
-                <div class="relic-card" data-name="<?php echo strtolower(htmlspecialchars($relic['name'])); ?>" data-type="<?php echo htmlspecialchars($relic['type']); ?>">
-                    <!-- Hình ảnh bên trái -->
-                    <div class="image-container">
-                        <img class="relic-image" src="HonkaiStarrail/admin/uploads/relics/<?php echo htmlspecialchars($relic['icon']); ?>" alt="<?php echo htmlspecialchars($relic['name']); ?>">
-                    </div>
+        <?php if ($result && $result->num_rows > 0): ?>
+            <div class="relic-grid">
+                <?php while($relic = $result->fetch_assoc()): ?>
+                    <div class="relic-card" data-name="<?php echo strtolower(htmlspecialchars($relic['name'])); ?>" data-type="<?php echo htmlspecialchars($relic['type']); ?>">
+                        <!-- Hình ảnh bên trái -->
+                        <div class="image-container">
+                            <img class="relic-image" src="HonkaiStarrail/admin/uploads/relics/<?php echo htmlspecialchars($relic['icon']); ?>" alt="<?php echo htmlspecialchars($relic['name']); ?>">
+                        </div>
 
-                    <!-- Thông tin bên phải -->
-                    <div class="info-container">
-                        <div class="info-header">
-                            <h3><?php echo htmlspecialchars($relic['name']); ?></h3>
-                            <div class="relic-type">
-                                <?php
-                                if ($relic['type'] === 'Relic') {
-                                    echo 'Di Vật';
-                                } elseif ($relic['type'] === 'Planetary Ornament Set') {
-                                    echo 'Phụ Kiện Vị Diện';
-                                }
-                                ?>
+                        <!-- Thông tin bên phải -->
+                        <div class="info-container">
+                            <div class="info-header">
+                                <h3><?php echo htmlspecialchars($relic['name']); ?></h3>
+                                <div class="relic-type"><?php echo ($relic['type'] === 'Relic') ? 'Di Vật' : 'Phụ Kiện Vị Diện'; ?></div>
                             </div>
-                        </div>
 
-                        <!-- Hiệu ứng 2 món (luôn hiển thị) -->
-                        <div class="effect-box">
-                            <strong><?php echo ($relic['type'] === 'Relic') ? 'Hiệu ứng 2 món' : 'Hiệu ứng bộ'; ?>:</strong>
-                            <span><?php echo nl2br(htmlspecialchars($relic['set2_effect'])); ?></span>
-                        </div>
-
-                        <!-- Hiệu ứng 4 món (chỉ hiển thị nếu là 'Relic' và có hiệu ứng) -->
-                        <?php if ($relic['type'] === 'Relic' && !empty($relic['set4_effect'])): ?>
                             <div class="effect-box">
-                                <strong>Hiệu ứng 4 món:</strong>
-                                <span><?php echo nl2br(htmlspecialchars($relic['set4_effect'])); ?></span>
+                                <strong><?php echo ($relic['type'] === 'Relic') ? 'Hiệu ứng 2 món' : 'Hiệu ứng bộ'; ?>:</strong>
+                                <span><?php echo nl2br(htmlspecialchars($relic['set2_effect'])); ?></span>
                             </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            <?php endwhile; ?>
-        </div>
-    <?php else: ?>
-        <p style="text-align: center;">Không có bộ di vật nào trong cơ sở dữ liệu.</p>
-    <?php endif; ?>
 
-    <p id="no-results" style="text-align: center; display: none; margin-top: 20px;">Không tìm thấy bộ di vật nào phù hợp.</p>
+                            <?php if ($relic['type'] === 'Relic' && !empty($relic['set4_effect'])): ?>
+                                <div class="effect-box">
+                                    <strong>Hiệu ứng 4 món:</strong>
+                                    <span><?php echo nl2br(htmlspecialchars($relic['set4_effect'])); ?></span>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endwhile; ?>
+            </div>
+        <?php else: ?>
+            <p style="text-align: center;">Không có bộ di vật nào trong cơ sở dữ liệu.</p>
+        <?php endif; ?>
+
+        <p id="no-results" style="text-align: center; display: none; margin-top: 20px;">Không tìm thấy bộ di vật nào phù hợp.</p>
+    </main>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {

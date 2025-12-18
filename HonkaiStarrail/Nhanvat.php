@@ -66,37 +66,114 @@ $result = $stmt->get_result();
     <title>Danh sách Nhân Vật Honkai Star Rail</title>
 
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            background: #f7f7f7; 
-            padding: 20px; 
+        :root {
+            --primary-color: #1e3a56;
+            --secondary-color: #f0f2f5;
+            --text-color: #333;
+            --sidebar-bg: #fff;
+            --sidebar-width: 240px;
         }
 
-        h2 { margin-bottom: 20px; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body { 
+            font-family: Arial, sans-serif; 
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            display: flex;
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: var(--sidebar-bg);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .sidebar-nav ul { list-style: none; }
+        .sidebar-nav li { margin-bottom: 15px; }
+        .sidebar-nav a {
+            text-decoration: none;
+            color: var(--text-color);
+            font-size: 1.1em;
+            padding: 10px 15px;
+            display: block;
+            border-radius: 8px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .sidebar-nav a:hover { background-color: var(--primary-color); color: #fff; }
+
+        /* --- Main Content --- */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            padding: 40px;
+        }
+
+        h2 { 
+            margin-bottom: 30px; 
+            text-align: center;
+            color: var(--primary-color);
+        }
 
         /* Bộ lọc */
         .filter-box { 
-            margin-bottom: 20px; 
-            padding: 15px;
+            max-width: 100%;
+            margin: 0 auto 30px auto;
             background: #fff;
-            border-radius: 10px;
-            box-shadow: 0 2px 6px #0002;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             display: flex;
             align-items: center;
             gap: 18px;
+            flex-wrap: wrap;
         }
 
-        .filter-box select, 
+        .filter-box label {
+            font-weight: bold;
+            color: #333;
+            font-size: 0.9em;
+            margin-right: -10px;
+        }
+
+        .filter-box select,
         .filter-box button {
-            padding: 6px 10px;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
             border-radius: 6px;
-            border: 1px solid #ccc;
+            font-size: 1em;
+        }
+
+        .filter-box button {
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
         }
 
         /* Grid 2 cột */
         .character-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
             gap: 24px;
         }
 
@@ -104,11 +181,17 @@ $result = $stmt->get_result();
         .character-card {
             background: #fff; 
             border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             display: flex; 
             padding: 16px;
             gap: 20px;
             align-items: flex-start; /* Căn các item từ trên xuống */
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .character-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
         }
 
         /* Ảnh đại diện bên trái */
@@ -160,6 +243,12 @@ $result = $stmt->get_result();
 
         /* Responsive */
         @media (max-width: 900px) {
+            .sidebar { display: none; }
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 20px;
+            }
             .character-grid { grid-template-columns: 1fr; }
         }
 
@@ -181,107 +270,119 @@ $result = $stmt->get_result();
 </head>
 <body>
 
-<h2>Danh sách Nhân Vật Honkai Star Rail</h2>
+    <aside class="sidebar">
+        <div class="sidebar-header">HoYoWiki</div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="Nhanvat.php">Nhân Vật</a></li>
+                <li><a href="Nonanhsang.php">Nón Ánh Sáng</a></li>
+                <li><a href="Divat.php">Di Vật</a></li>
+                <li><a href="tierlist.php">Tier List</a></li>
+            </ul>
+        </nav>
+    </aside>
 
-<!-- FORM LỌC -->
-<form method="get" class="filter-box">
-    
-    <label for="vanmenh">Vận Mệnh:</label>
-    <select name="vanmenh" id="vanmenh">
-        <option value="">Tất cả</option>
-        <?php foreach ($paths as $p): ?>
-            <option value="<?= htmlspecialchars($p) ?>"
-                <?= ($vanmenh === $p) ? 'selected' : '' ?>>
-                <?= htmlspecialchars($p) ?>
-            </option>
-        <?php endforeach; ?>
-    </select>
+    <main class="main-content">
+        <h2>Danh sách Nhân Vật Honkai Star Rail</h2>
 
-    <label for="thuoc_tinh">Thuộc Tính:</label>
-    <select name="thuoc_tinh" id="thuoc_tinh">
-        <option value="">Tất cả</option>
-        <?php foreach ($elements as $e): ?>
-            <option value="<?= htmlspecialchars($e) ?>"
-                <?= ($thuoctinh === $e) ? 'selected' : '' ?>>
-                <?= htmlspecialchars($e) ?>
-            </option>
-        <?php endforeach; ?>
-    </select>
+        <!-- FORM LỌC -->
+        <form method="get" class="filter-box">
+            
+            <label for="vanmenh">Vận Mệnh:</label>
+            <select name="vanmenh" id="vanmenh">
+                <option value="">Tất cả</option>
+                <?php foreach ($paths as $p): ?>
+                    <option value="<?= htmlspecialchars($p) ?>"
+                        <?= ($vanmenh === $p) ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($p) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
 
-    <button type="submit">Lọc</button>
-</form>
-<!-- GRID HIỂN THỊ NHÂN VẬT -->
-<div class="character-grid">
+            <label for="thuoc_tinh">Thuộc Tính:</label>
+            <select name="thuoc_tinh" id="thuoc_tinh">
+                <option value="">Tất cả</option>
+                <?php foreach ($elements as $e): ?>
+                    <option value="<?= htmlspecialchars($e) ?>"
+                        <?= ($thuoctinh === $e) ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($e) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
 
-<?php if ($result && $result->num_rows > 0): ?>
-    <?php while ($char = $result->fetch_assoc()): ?>
+            <button type="submit">Lọc</button>
+        </form>
+        <!-- GRID HIỂN THỊ NHÂN VẬT -->
+        <div class="character-grid">
 
-        <div class="character-card">
+        <?php if ($result && $result->num_rows > 0): ?>
+            <?php while ($char = $result->fetch_assoc()): ?>
 
-            <!-- ẢNH NHÂN VẬT -->
-            <img class="avatar"
-                src="HonkaiStarrail/admin/uploads/characters/<?= htmlspecialchars(urlencode($char['image'])) ?>"
-                alt="<?= htmlspecialchars($char['name']) ?>">
+                <div class="character-card">
 
-            <div class="info-box">
-                
-                <h3><?= htmlspecialchars($char['name']) ?></h3>
+                    <!-- ẢNH NHÂN VẬT -->
+                    <img class="avatar"
+                        src="HonkaiStarrail/admin/uploads/characters/<?= htmlspecialchars(urlencode($char['image'])) ?>"
+                        alt="<?= htmlspecialchars($char['name']) ?>">
 
-                <!-- HIỂN THỊ SAO -->
-                <div class="rarity-stars">
-                    <?php
-                    $rarity = intval($char['rarity']);
-                    if ($rarity > 0) {
-                        $star_class = "star star-" . $rarity;
-                        for ($i = 0; $i < $rarity; $i++) {
-                            echo '<span class="' . $star_class . '">&#9733;</span>';
-                        }
-                    }
-                    ?>
-                </div>
-                <!-- ICON PATH + ELEMENT -->
-                <div class="small-icons">
+                    <div class="info-box">
+                        
+                        <h3><?= htmlspecialchars($char['name']) ?></h3>
 
-                    <img class="small-icon"
-                        src="HonkaiStarrail/admin/uploads/paths/<?= htmlspecialchars(urlencode($char['path_icon'])) ?>"
-                        alt="Path Icon"
-                        title="<?= htmlspecialchars($char['path_name']) ?>">
+                        <!-- HIỂN THỊ SAO -->
+                        <div class="rarity-stars">
+                            <?php
+                            $rarity = intval($char['rarity']);
+                            if ($rarity > 0) {
+                                $star_class = "star star-" . $rarity;
+                                for ($i = 0; $i < $rarity; $i++) {
+                                    echo '<span class="' . $star_class . '">&#9733;</span>';
+                                }
+                            }
+                            ?>
+                        </div>
+                        <!-- ICON PATH + ELEMENT -->
+                        <div class="small-icons">
 
-                    <img class="small-icon"
-                        src="HonkaiStarrail/admin/uploads/elements/<?= htmlspecialchars(urlencode($char['element_icon'])) ?>"
-                        alt="Element Icon"
-                        title="<?= htmlspecialchars($char['element_name']) ?>">
+                            <img class="small-icon"
+                                src="HonkaiStarrail/admin/uploads/paths/<?= htmlspecialchars(urlencode($char['path_icon'])) ?>"
+                                alt="Path Icon"
+                                title="<?= htmlspecialchars($char['path_name']) ?>">
 
-                </div>
+                            <img class="small-icon"
+                                src="HonkaiStarrail/admin/uploads/elements/<?= htmlspecialchars(urlencode($char['element_icon'])) ?>"
+                                alt="Element Icon"
+                                title="<?= htmlspecialchars($char['element_name']) ?>">
 
-                <!-- THUỘC TÍNH -->
-                <div class="stats">
-                    <div class="stat-row">
-                        <span class="stat-label">HP:</span><span><?= $char['hp'] ?></span>
-                        <span class="stat-label">ATK:</span><span><?= $char['atk'] ?></span>
+                        </div>
+
+                        <!-- THUỘC TÍNH -->
+                        <div class="stats">
+                            <div class="stat-row">
+                                <span class="stat-label">HP:</span><span><?= $char['hp'] ?></span>
+                                <span class="stat-label">ATK:</span><span><?= $char['atk'] ?></span>
+                            </div>
+
+                            <div class="stat-row">
+                                <span class="stat-label">DEF:</span><span><?= $char['def'] ?></span>
+                                <span class="stat-label">SPD:</span><span><?= $char['spd'] ?></span>
+                            </div>
+                        </div>
                     </div>
-
-                    <div class="stat-row">
-                        <span class="stat-label">DEF:</span><span><?= $char['def'] ?></span>
-                        <span class="stat-label">SPD:</span><span><?= $char['spd'] ?></span>
-                    </div>
                 </div>
 
-            </div>
-        </div>
+            <?php endwhile; ?>
 
-    <?php endwhile; ?>
+        <?php else: ?>
+            <p>Không có nhân vật nào phù hợp.</p>
+        <?php endif; ?>
 
-<?php else: ?>
-    <p>Không có nhân vật nào phù hợp.</p>
-<?php endif; ?>
-
-</div> <!-- END GRID -->
-
-<?php $stmt->close(); ?>
-</body>
-</html>
+        </div> <!-- END GRID -->
+    </main>
 
 <?php 
+$stmt->close(); 
 $conn->close();
 ?>
+</body>
+</html>
