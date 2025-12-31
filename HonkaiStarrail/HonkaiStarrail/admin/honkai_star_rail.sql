@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th12 11, 2025 lúc 09:18 AM
+-- Thời gian đã tạo: Th12 30, 2025 lúc 09:50 AM
 -- Phiên bản máy phục vụ: 10.4.32-MariaDB
 -- Phiên bản PHP: 8.0.30
 
@@ -42,40 +42,46 @@ CREATE TABLE `admin` (
 CREATE TABLE `builds` (
   `id` int(11) NOT NULL,
   `character_id` int(11) NOT NULL,
-  `lightcone` text DEFAULT NULL,
-  `lightcone1_rate` int(11) DEFAULT NULL,
+  `character_name` varchar(100) NOT NULL,
+  `lightcone1` varchar(100) DEFAULT NULL,
+  `lightcone1_rate` float DEFAULT NULL,
+  `lightcone1_power` float DEFAULT NULL,
   `lightcone2` varchar(100) DEFAULT NULL,
-  `lightcone2_rate` int(11) DEFAULT NULL,
+  `lightcone2_rate` float DEFAULT NULL,
+  `lightcone2_power` float DEFAULT NULL,
   `lightcone3` varchar(100) DEFAULT NULL,
-  `lightcone3_rate` int(11) DEFAULT NULL,
-  `lightcone4` varchar(100) DEFAULT NULL,
-  `lightcone4_rate` int(11) DEFAULT NULL,
-  `relics` text DEFAULT NULL,
+  `lightcone3_rate` float DEFAULT NULL,
+  `lightcone3_power` float DEFAULT NULL,
+  `relic1_set` varchar(100) DEFAULT NULL,
   `relic1_effect` enum('2','4') DEFAULT NULL,
   `relic1_2set` varchar(100) DEFAULT NULL,
-  `relic1_rate` int(11) DEFAULT NULL,
+  `relic1_rate` float DEFAULT NULL,
+  `relic1_power` float DEFAULT NULL,
   `relic2_set` varchar(100) DEFAULT NULL,
   `relic2_effect` enum('2','4') DEFAULT NULL,
   `relic2_2set` varchar(100) DEFAULT NULL,
-  `relic2_rate` int(11) DEFAULT NULL,
+  `relic2_rate` float DEFAULT NULL,
+  `relic2_power` float DEFAULT NULL,
   `relic3_set` varchar(100) DEFAULT NULL,
   `relic3_effect` enum('2','4') DEFAULT NULL,
   `relic3_2set` varchar(100) DEFAULT NULL,
-  `relic3_rate` int(11) DEFAULT NULL,
-  `relic4_set` varchar(100) DEFAULT NULL,
-  `relic4_effect` enum('2','4') DEFAULT NULL,
-  `relic4_2set` varchar(100) DEFAULT NULL,
-  `relic4_rate` int(11) DEFAULT NULL,
-  `planar` text DEFAULT NULL,
-  `ornament1_rate` int(11) DEFAULT NULL,
+  `relic3_rate` float DEFAULT NULL,
+  `relic3_power` float DEFAULT NULL,
+  `ornament1` varchar(100) DEFAULT NULL,
+  `ornament1_rate` float DEFAULT NULL,
+  `ornament1_power` float DEFAULT NULL,
   `ornament2` varchar(100) DEFAULT NULL,
-  `ornament2_rate` int(11) DEFAULT NULL,
+  `ornament2_rate` float DEFAULT NULL,
+  `ornament2_power` float DEFAULT NULL,
   `ornament3` varchar(100) DEFAULT NULL,
-  `ornament3_rate` int(11) DEFAULT NULL,
-  `main_stats` text DEFAULT NULL,
-  `substats_priority` text DEFAULT NULL,
+  `ornament3_rate` float DEFAULT NULL,
+  `ornament3_power` float DEFAULT NULL,
+  `mainstat_body` varchar(50) DEFAULT NULL,
+  `mainstat_boots` varchar(50) DEFAULT NULL,
+  `mainstat_sphere` varchar(50) DEFAULT NULL,
+  `mainstat_rope` varchar(50) DEFAULT NULL,
+  `substats` text DEFAULT NULL,
   `target_stats` text DEFAULT NULL,
-  `team1_1` varchar(150) DEFAULT NULL,
   `team1_1` varchar(100) DEFAULT NULL,
   `team1_2` varchar(100) DEFAULT NULL,
   `team1_3` varchar(100) DEFAULT NULL,
@@ -116,9 +122,15 @@ CREATE TABLE `builds` (
   `team10_2` varchar(100) DEFAULT NULL,
   `team10_3` varchar(100) DEFAULT NULL,
   `team10_4` varchar(100) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `builds`
+--
+
+INSERT INTO `builds` (`id`, `character_id`, `character_name`, `lightcone1`, `lightcone1_rate`, `lightcone1_power`, `lightcone2`, `lightcone2_rate`, `lightcone2_power`, `lightcone3`, `lightcone3_rate`, `lightcone3_power`, `relic1_set`, `relic1_effect`, `relic1_2set`, `relic1_rate`, `relic1_power`, `relic2_set`, `relic2_effect`, `relic2_2set`, `relic2_rate`, `relic2_power`, `relic3_set`, `relic3_effect`, `relic3_2set`, `relic3_rate`, `relic3_power`, `ornament1`, `ornament1_rate`, `ornament1_power`, `ornament2`, `ornament2_rate`, `ornament2_power`, `ornament3`, `ornament3_rate`, `ornament3_power`, `mainstat_body`, `mainstat_boots`, `mainstat_sphere`, `mainstat_rope`, `substats`, `target_stats`, `team1_1`, `team1_2`, `team1_3`, `team1_4`, `team2_1`, `team2_2`, `team2_3`, `team2_4`, `team3_1`, `team3_2`, `team3_3`, `team3_4`, `team4_1`, `team4_2`, `team4_3`, `team4_4`, `team5_1`, `team5_2`, `team5_3`, `team5_4`, `team6_1`, `team6_2`, `team6_3`, `team6_4`, `team7_1`, `team7_2`, `team7_3`, `team7_4`, `team8_1`, `team8_2`, `team8_3`, `team8_4`, `team9_1`, `team9_2`, `team9_3`, `team9_4`, `team10_1`, `team10_2`, `team10_3`, `team10_4`, `created_at`) VALUES
+(1, 2, 'Aglaea', 'Dệt Thời Gian Thành Vàng', 81.68, NULL, 'Đổ Mồ Hôi Nhiều, Rơi Nước Mắt Ít', 8.25, NULL, 'Lời Chào Hỏi Của Thiên Tài', 1.82, NULL, 'Anh Hùng Ca Khúc Khải Hoàn', '4', NULL, 97.51, NULL, 'Học Giả Lạc Lối Trong Biển Tri Thức', '2', 'Anh Hùng Ca Khúc Khải Hoàn + Ban Nhạc Sizzling Thunder + Dũng Khí Ngút Trời + Thiện Xạ Bông Lúa + Tù', NULL, NULL, 'Thiện Xạ Bông Lúa', '4', NULL, 0.31, NULL, 'Công Viên Chuối Kỳ Ảo', 90.82, NULL, 'Đấu Trường Ngôi Sao', 6.66, NULL, 'Glamoth, Chiến Tuyến Không Trung', 0.54, NULL, 'Tỉ Lệ Bạo Kích / Sát Thương Bạo Kích', NULL, NULL, NULL, NULL, NULL, 'Aglaea', NULL, NULL, NULL, 'Aglaea', NULL, NULL, NULL, 'Aglaea', NULL, NULL, NULL, 'Aglaea', NULL, NULL, NULL, 'Aglaea', NULL, NULL, NULL, 'Aglaea', NULL, NULL, NULL, 'Aglaea', NULL, NULL, NULL, 'Aglaea', NULL, NULL, NULL, 'Aglaea', NULL, NULL, NULL, 'Aglaea', NULL, NULL, NULL, '2025-12-30 03:59:15');
 
 -- --------------------------------------------------------
 
@@ -223,7 +235,8 @@ INSERT INTO `characters` (`id`, `name`, `path_id`, `element_id`, `hp`, `atk`, `d
 (79, 'Nhà Khai Phá - Hủy Diệt', 2, 7, 1203, 620, 460, 100, '5', '[Nam]\r\n\r\nThiếu niên lên Đội Tàu Astral.\r\n\r\nĐể diệt trừ hiểm họa mà Stellaron mang đến, đã quyết định đồng hành cùng đoàn tàu.\r\n\r\n[Nữ]\r\n\r\nThiếu nữ lên Đội Tàu Astral.\r\n\r\nĐể diệt trừ hiểm họa mà Stellaron mang đến, đã quyết định đồng hành cùng đoàn tàu.', 'TrailblazerDestruction.jpg'),
 (80, 'Evernight', 5, 1, 1319, 543, 582, 99, '5', '\"Khách Lạ Bí Ẩn\" Evernight\r\n\r\nVùng Hồi Ức tách biệt với thế giới, ánh nến phản chiếu quá khứ, rồi lặng lẽ lụi tắt trong màn sương.\r\n\r\nĐứa con của Ký Ức đến từ bóng tối - Evernight, Hậu Duệ Chrysos che giấu Ngọn Lửa \"Thời Gian\", khơi dậy sóng thủy triều của sự \"Lãng Quên\", bảo vệ tâm nguyện của người trong gương.\r\n\r\n-\"Đừng lo lắng, tôi sẽ bảo vệ con đường \"Khai Phá\" của cô... bằng mọi giá ♭\"', 'Evernight.jpg'),
 (81, 'Dan Heng - Permansor Terrae', 1, 7, 1048, 582, 776, 97, '5', '\"Hoang Long Đằng Phi\" Dan Heng - Permansor Terrae\r\n\r\nLồng ngực của Georios, thân thể của Phục Long đang nâng đỡ mặt đất vỡ nát, chịu đựng nỗi thống khổ ngàn năm.\r\n\r\nKhách Vô Danh Dan Heng, Hậu Duệ Chrysos bảo vệ Ngọn Lửa của \"Mặt Đất\", chống đỡ bát hoang sắp sụp đổ, đưa sinh linh trên mặt đất đến những vùng đất xa xôi\r\n\r\n-Trăm sông đổ về biển, núi non đồng vọng tiếng vang, con đường bất diệt sẽ trải dài vạn dặm.', 'DanHengPT.jpg'),
-(82, 'Cyrene', 5, 1, 1396, 4466, 582, 101, '5', '\"Gợn Sóng Quá Khứ\" Cyrene\r\n\r\nSao băng vụt qua bầu trời đêm, dòng sông sinh mệnh gợn sóng lăn tăn, lấp lánh mười ba sắc màu.\r\n\r\nNgười con gái của Aedes Elysiae, Hậu Duệ Chrysos nuôi dưỡng \"██\", hãy gieo mầm ký ức, để những đóa hoa quá khứ bung nở vào ngày mai', 'Cyrene.jpg');
+(82, 'Cyrene', 5, 1, 1396, 4466, 582, 101, '5', '\"Gợn Sóng Quá Khứ\" Cyrene\r\n\r\nSao băng vụt qua bầu trời đêm, dòng sông sinh mệnh gợn sóng lăn tăn, lấp lánh mười ba sắc màu.\r\n\r\nNgười con gái của Aedes Elysiae, Hậu Duệ Chrysos nuôi dưỡng \"██\", hãy gieo mầm ký ức, để những đóa hoa quá khứ bung nở vào ngày mai', 'Cyrene.jpg'),
+(83, 'Dahlia', 4, 2, 1087, 679, 606, 96, '5', '\"Ký ức của bạn... quả thật rắc rối đấy, vậy hãy để tôi mở lòng trước nhé. Tôi tên là Constance, những kẻ quỳ gối dưới tà váy của tôi gọi tôi là \'Dahlia\'. Đừng sợ, hãy đi theo tôi, trong điệu vũ đôi chỉ dành riêng cho hai ta này, bạn sẽ biết được quá khứ đã bị thiêu rụi như thế nào, và tương lai sẽ bị chôn vùi ra sao...\"\r\n\r\nGiấc mộng đẹp đã thiêu rụi Dinh Thự Ever-Flame, mang theo những ký ức về \"cô ấy\".\r\n\r\n\"Hủy Diệt\", \"Ký Ức\"... những đóa hoa phản bội nở rộ trên con đường đã đi qua...\r\n\r\nQuay trở lại cõi mộng không ai hay biết, điều gì sẽ đốt cháy cô ấy một lần nữa?', 'TheDahlia.jpg');
 
 -- --------------------------------------------------------
 
@@ -401,7 +414,8 @@ INSERT INTO `lightcones` (`id`, `name`, `path_id`, `hp`, `atk`, `def`, `rarity`,
 (123, 'Sự Trầm Mặc Duy Nhất', 6, 952, 476, 330, '4', '\"Đến trạm rồi, không xuống xe sao?\"\r\n\r\nMột tiếng cười nhẹ vang trên đỉnh đầu. Đôi mắt của anh hơi xao động nhưng không hề ngẩng đầu lên.\r\n\r\n\"March thường nói mặt anh vô cảm, nhưng tôi lại không cảm thấy thế.\"\r\n\r\n\"Dữ liệu của Kho Lưu Trữ trong đoàn tàu có cập nhật các vết tích mới, nhưng lại không lưu trữ kết quả.\"\r\n\r\n\"Vậy thì... mục nào còn làm khó được anh nhỉ?\"\r\n\r\nAnh siết chặt cây bút, nhìn vào cảnh tượng thê thảm trong quyển sổ chỉ được viết lại theo ấn tượng.\r\n\r\n\"Thì ra là vậy, là chuyện liên quan đến bản thân anh...\"', 'SuTramMacDuyNhat.jpg', 'Tấn Công của người trang bị tăng 16%/20%/24%/28%/32%. Khi trong trận có 2 kẻ địch trở xuống, Tỷ Lệ Bạo Kích của người trang bị tăng 12%/15%/18%/21%/24%.'),
 (124, 'Ngày Đầu Tiên', 1, 952, 463, 370, '4', '\"Hôm nay Pom-Pom đã thay áo mới, vui vui... thích thích~\"\r\n\r\n\"Hôm nay sinh nhật nè, năm nay tôi vẫn rất dễ thương.\"\r\n\r\n\"Hôm nay rốt cuộc tôi cũng có hậu bối rồi! Có phải không?\"\r\n\r\nNhấn nút chụp liên tục hết lần này đến lần khác mà không cần suy nghĩ.\r\n\r\nLà để bắt lấy khoảnh khắc vui vẻ?\r\n\r\nHay là lưu giữ khoảnh khắc của bản thân lúc đó?', 'NgayDauTien.jpg', 'Phòng Thủ của người trang bị tăng 16%/18%/20%/22%/24%. Sau khi vào chiến đấu, Kháng Sát Thương của toàn phe ta tăng 8%/9%/10%/11%/12%. Kỹ năng cùng loại sẽ không có hiệu lực trùng lặp.'),
 (125, 'Chúc Ngủ Ngon', 4, 952, 476, 330, '4', 'Ánh đèn tĩnh lặng tô điểm nên một vệt sáng bụi mờ,\r\n\r\nnhịp thở đều đặn mang theo lời nói mơ ngọt ngào của người thiếu nữ.\r\n\r\nMột bóng người xuất hiện phía sau cô ấy, im lặng không nói gì.\r\n\r\n\"Chậc chậc chậc, đúng là tháo mắt kính xuống thì dễ thương hơn mà.\"\r\n\r\nTay ghi-ta chăm chú quan sát gương mặt say ngủ của cô ấy rồi tự lẩm bẩm:\r\n\r\n\"Ngủ ngon, thiếu nữ thiên tài hay lo nghĩ.\"', 'ChucNguNgon.jpg', 'Mỗi khi kẻ địch nhận phải 1 Hiệu Ứng Xấu, thì sát thương người trang bị gây ra cho kẻ đó sẽ tăng 12%/15%/18%/21%/24%, tối đa cộng dồn 3 tầng. Hiệu ứng này cũng có hiệu lực với sát thương duy trì.'),
-(126, 'Buổi Trò Chuyện Hậu Phẫu', 8, 1058, 423, 330, '4', '\"Tỉnh rồi à... cám ơn.\"\r\n\r\n\"Cô... cô đã cứu tôi... Natasha. Người nên nói lời cám ơn... là tôi mới phải.\"\r\n\r\n\"Không, tôi mới phải nói lời cám ơn... cám ơn vì đã kiên trì đến khi tôi hoàn thành ca phẫu thuật.\"\r\n\r\nBác sĩ và bệnh nhân mệt mỏi nhìn nhau cười, rồi không nói gì nữa.', 'BuoiTroChuyenHauPhau.jpg', 'Khiến hiệu suất Hồi Năng Lượng của người trang bị tăng 8%/10%/12%/14%/16%, đồng thời lượng trị liệu khi thi triển Tuyệt Kỹ tăng 12%/15%/18%/21%/24%.');
+(126, 'Buổi Trò Chuyện Hậu Phẫu', 8, 1058, 423, 330, '4', '\"Tỉnh rồi à... cám ơn.\"\r\n\r\n\"Cô... cô đã cứu tôi... Natasha. Người nên nói lời cám ơn... là tôi mới phải.\"\r\n\r\n\"Không, tôi mới phải nói lời cám ơn... cám ơn vì đã kiên trì đến khi tôi hoàn thành ca phẫu thuật.\"\r\n\r\nBác sĩ và bệnh nhân mệt mỏi nhìn nhau cười, rồi không nói gì nữa.', 'BuoiTroChuyenHauPhau.jpg', 'Khiến hiệu suất Hồi Năng Lượng của người trang bị tăng 8%/10%/12%/14%/16%, đồng thời lượng trị liệu khi thi triển Tuyệt Kỹ tăng 12%/15%/18%/21%/24%.'),
+(127, 'Đừng Quên Ngọn Lửa Của Cô Ấy', 4, 1164, 529, 463, '5', '', 'DungQuenNgonLuaCuaCoAy.jpg', 'Khiến Tấn Công Kích Phá của người trang bị tăng 60%/75%/90%/105%/120%. Khi vào chiến đấu, khiến Sát Thương Phá Vỡ của người trang bị và một đồng đội khai chiến khác gây ra tăng 32%/42%/52%/62%/72%. Nếu không có đồng đội khai chiến, thì sẽ có hiệu lực với người trang bị và đồng đội có chỉ số Tấn Công Kích Phá cao nhất. Hiệu ứng cùng loại không thể cộng dồn. Khi người trang bị thêm Điểm Yếu cho mục tiêu phe địch, sẽ hồi phục 1 Điểm Chiến Kỹ. Hiệu ứng này kích hoạt tối đa 1 lần, khi thi triển Tuyệt Kỹ sẽ làm mới số lần có thể kích hoạt.');
 
 -- --------------------------------------------------------
 
@@ -527,8 +541,8 @@ INSERT INTO `relics` (`id`, `name`, `type`, `icon`, `set2_effect`, `set4_effect`
 (10, 'Thiên Đường Yêu Tinh Dệt Mộng', 'Planetary Ornament Set', 'ThienDuongYeuTinhDetMong.jpg', 'Khi số lượng mục tiêu của đội ngũ phe ta ở trong trận hiện tại không bằng 4, mỗi khi thêm/mất 1 mục tiêu phe ta, sẽ khiến sát thương gây ra bởi người trang bị và Linh Hồn Ký Ức của người đó tăng 9%/12%, tối đa cộng dồn 4/3 tầng.', NULL),
 (11, 'Thiên Tài Xuất Chúng', 'Relic', 'ThienTaiXuatChung.jpg', 'Sát Thương Lượng Tử tăng 10%.', 'Khi người trang bị gây sát thương lên mục tiêu địch, sẽ bỏ qua 10% Phòng Thủ của địch. Nếu mục tiêu có Điểm Yếu Lượng Tử, sẽ bỏ qua thêm 10% Phòng Thủ của địch.'),
 (12, 'Lại Một Hành Trình Gian Khổ Của Linh Mục', 'Relic', 'LaiMotHanhTrinhGianKhoCuaLinhMuc.jpg', 'Tốc Độ tăng 6%.', 'Khi thi triển Chiến Kỹ hoặc Tuyệt Kỹ lên 1 mục tiêu phe ta, sẽ khiến Sát Thương Bạo Kích của mục tiêu kỹ năng tăng 18%, duy trì 2 hiệp, hiệu ứng này tối đa cộng dồn 2 lần.'),
-(13, 'Ban Nhạc Sizzling Thunder', 'Relic', 'BanNhacSizzling Thunder.jpg', 'Sát Thương Lôi tăng 10%.', 'Khi người trang bị thi triển Chiến Kỹ, Tấn Công của người đó tăng 20%, duy trì 1 hiệp.'),
-(14, 'Chim Ưng Chạng Vạng', 'Relic', 'ChimUng ChangVang.jpg', 'Sát Thương Phong tăng 10%.', 'Sau khi người trang bị thi triển Tuyệt Kỹ, khiến Hành Động của người đó ưu tiên 25%.'),
+(13, 'Ban Nhạc Sizzling Thunder', 'Relic', 'BanNhacSizzlingThunder.jpg', 'Sát Thương Lôi tăng 10%.', 'Khi người trang bị thi triển Chiến Kỹ, Tấn Công của người đó tăng 20%, duy trì 1 hiệp.'),
+(14, 'Chim Ưng Chạng Vạng', 'Relic', 'ChimUngChangVang.jpg', 'Sát Thương Phong tăng 10%.', 'Sau khi người trang bị thi triển Tuyệt Kỹ, khiến Hành Động của người đó ưu tiên 25%.'),
 (15, 'Kẻ Cướp Vệt Sao Băng', 'Relic', 'KeCuopVetSaoBang.jpg', 'Tấn Công Kích Phá tăng 16%.', 'Tăng 16% Tấn Công Kích Phá của người trang bị. Sau khi người trang bị phá vỡ điểm yếu của kẻ địch, sẽ hồi 3 điểm Năng Lượng.'),
 (16, 'Kẻ Hoang Dã Sa Mạc', 'Relic', 'KeHoangDaSaMac.jpg', 'Sát Thương Số Ảo tăng 10%.', 'Khi người trang bị gây sát thương lên mục tiêu địch rơi vào Hiệu Ứng Xấu, Tỷ Lệ Bạo Kích tăng 10%, khi gây sát thương mục tiêu địch rơi vào trạng thái Giam Cầm, Sát Thương Bạo Kích tăng 20%.'),
 (17, 'Lãng Khách Âm Thầm', 'Relic', 'LangKhachAmTham.jpg', 'Lượng Trị Liệu tăng 10%.', 'Khi bắt đầu chiến đấu sẽ hồi ngay cho phe ta 1 điểm Chiến Kỹ.'),
@@ -549,14 +563,14 @@ INSERT INTO `relics` (`id`, `name`, `type`, `icon`, `set2_effect`, `set4_effect`
 (32, 'Talia - Vương Quốc Trộm Cướp', 'Planetary Ornament Set', 'TaliaVuongQuocTromCuop.jpg', 'Tăng 16% Tấn Công Kích Phá của người trang bị. Khi tốc độ của người trang bị từ 145 trở lên, Tấn Công Kích Phá tăng thêm 20%.', NULL),
 (33, 'Trạm Phong Ấn Không Gian', 'Planetary Ornament Set', 'TramPhongAnKhongGian.jpg', 'Tăng 12% Tấn Công của người trang bị. Khi tốc độ của người trang bị từ 120 trở lên, Tấn Công tăng thêm 12%.', NULL),
 (34, 'Vonwacq Hoạt Bát', 'Planetary Ornament Set', 'VonwacqHoatBat.jpg', 'Tăng 5% hiệu suất hồi Năng Lượng của người trang bị. Khi tốc độ của người trang bị từ 120 trở lên, vào chiến đấu sẽ lập tức Ưu Tiên Hành Động 40%.', NULL),
-(35, 'Xianzhou Không Có Tuổi', 'Planetary Ornament Set', 'XianzhouKhongCo Tuoi.jpg', 'Tăng 12% Giới Hạn HP của người trang bị. Khi tốc độ của người trang bị từ 120 trở lên, Tấn Công của toàn phe ta tăng 8%.', NULL),
+(35, 'Xianzhou Không Có Tuổi', 'Planetary Ornament Set', 'XianzhouKhongCoTuoi.jpg', 'Tăng 12% Giới Hạn HP của người trang bị. Khi tốc độ của người trang bị từ 120 trở lên, Tấn Công của toàn phe ta tăng 8%.', NULL),
 (36, 'Penacony, Vùng Đất Của Những Giấc Mơ', 'Planetary Ornament Set', 'PenaconyVungDatCuaNhungGiacMo.jpg', 'Tăng 5% hiệu suất hồi Năng Lượng của người trang bị. Khiến nhân vật khác trong đội của phe ta có cùng thuộc tính với người trang bị tăng 10% sát thương gây ra.', NULL),
 (37, 'Glamoth, Chiến Tuyến Không Trung', 'Planetary Ornament Set', 'GlamothChienTuyenKhongTrung.jpg', 'Tăng 12% Tấn Công của người trang bị. Khi tốc độ của người trang bị từ 135/160 trở lên, sát thương do người trang bị gây ra tăng 12%/18%.', NULL),
 (38, 'Tù Nhân Ngục Tối', 'Relic', 'TuNhanNgucToi.jpg', 'Tấn Công tăng 12%', 'Mỗi khi kẻ địch nhận phải 1 hiệu ứng Sát Thương Duy Trì, thì sát thương người trang bị gây ra cho kẻ đó sẽ bỏ qua 6% Phòng Thủ của kẻ đó. Hiệu ứng này có hiệu lực với tối đa 3 hiệu ứng Sát Thương Duy Trì.'),
 (39, 'Đại Công Tước Tro Tàn', 'Relic', 'DaiCongTuocTroTan.jpg', 'Sát thương Đòn Đánh Theo Sau gây ra tăng 20%.', 'Khi người trang bị thi triển Đòn Đánh Theo Sau, mỗi lần gây sát thương sẽ tăng 6% Tấn Công của người trang bị dựa theo số lần Đòn Đánh Theo Sau gây sát thương, tối đa cộng dồn 8 lần, duy trì 3 hiệp. Hiệu ứng này sẽ bị xóa khi người trang bị thi triển Đòn Đánh Theo Sau tiếp theo.'),
 (40, 'Tiên Phong Trong Nước Chết', 'Relic', 'TienPhongTrongNuocChet.jpg', 'Sát thương gây ra cho kẻ địch bị ảnh hưởng bởi Hiệu Ứng Xấu tăng 12%', 'Tăng 4% Tỷ Lệ Bạo Kích, tăng 8%/12% Sát Thương Bạo Kích mà người trang bị gây ra lên kẻ địch rơi vào không dưới 2/3 Hiệu Ứng Xấu. Sau khi người trang bị thi triển Hiệu Ứng Xấu lên kẻ địch, hiệu ứng nói trên tăng 100%, duy trì 1 hiệp'),
 (41, 'Thợ Đồng Hồ, Bậc Thầy Máy Móc', 'Relic', 'ThoDongHoBacThayMayMoc.jpg', 'Tấn Công Kích Phá tăng 16%.', 'Khi người trang bị thi triển Tuyệt Kỹ lên mục tiêu phe ta, Tấn Công Kích Phá toàn phe ta tăng 30%, duy trì 2 hiệp, hiệu ứng này không thể cộng dồn.'),
-(42, 'Izumo Hiện Thế Và Thần Quốc Cõi Trời', 'Planetary Ornament Set', 'IzumoHienTheVa ThanQuocCoiTroi.jpg', 'Tăng 12% Tấn Công của người trang bị. Khi vào chiến đấu, nếu có ít nhất 1 đồng đội cùng Vận Mệnh với người trang bị, thì Tỷ Lệ Bạo Kích của người trang bị tăng 12%.', NULL),
+(42, 'Izumo Hiện Thế Và Thần Quốc Cõi Trời', 'Planetary Ornament Set', 'IzumoHienTheVaThanQuocCoiTroi.jpg', 'Tăng 12% Tấn Công của người trang bị. Khi vào chiến đấu, nếu có ít nhất 1 đồng đội cùng Vận Mệnh với người trang bị, thì Tỷ Lệ Bạo Kích của người trang bị tăng 12%.', NULL),
 (43, 'Hành Tinh Vô Chủ Sigonia', 'Planetary Ornament Set', 'HanhTinhVoChuSigonia.jpg', 'Khiến tỷ lệ Bạo Kích của người trang bị tăng 4%. Khi kẻ địch bị tiêu diệt, Sát Thương Bạo Kích của người trang bị tăng 4%, tối đa cộng dồn 10 tầng.', NULL),
 (44, 'Thiết Kỵ Diệt Trừ Tai Họa', 'Relic', 'ThietKyDietTruTaiHoa.jpg', 'Tấn Công Kích Phá tăng 16%.', 'Khi Tấn Công Kích Phá của người trang bị lớn hơn hoặc bằng 150%, Sát Thương Phá Vỡ gây ra cho kẻ địch sẽ bỏ qua 10% Phòng Thủ của kẻ đó. Khi Tấn Công Kích Phá của người trang bị lớn hơn hoặc bằng 250%, Siêu Sát Thương Phá Vỡ gây ra cho kẻ địch sẽ bỏ qua thêm 15% Phòng Thủ của kẻ đó.'),
 (45, 'Cung Điện Rèn Đúc Kiếp Hỏa Liên Đăng', 'Planetary Ornament Set', 'CungDienRenDucKiepHoaLienDang.jpg', 'Tăng 6% Tốc Độ của người trang bị. Khi người trang bị đánh trúng kẻ địch có Điểm Yếu Hỏa, Tấn Công Kích Phá tăng 40%, duy trì 1 hiệp.', NULL),
@@ -603,7 +617,7 @@ ALTER TABLE `admin`
 --
 ALTER TABLE `builds`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `character_id` (`character_id`);
+  ADD UNIQUE KEY `uniq_character` (`character_id`);
 
 --
 -- Chỉ mục cho bảng `characters`
@@ -668,13 +682,13 @@ ALTER TABLE `admin`
 -- AUTO_INCREMENT cho bảng `builds`
 --
 ALTER TABLE `builds`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT cho bảng `characters`
 --
 ALTER TABLE `characters`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=83;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=84;
 
 --
 -- AUTO_INCREMENT cho bảng `elements`
@@ -686,7 +700,7 @@ ALTER TABLE `elements`
 -- AUTO_INCREMENT cho bảng `lightcones`
 --
 ALTER TABLE `lightcones`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=127;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=128;
 
 --
 -- AUTO_INCREMENT cho bảng `materials`
@@ -717,6 +731,12 @@ ALTER TABLE `teams`
 --
 
 --
+-- Các ràng buộc cho bảng `builds`
+--
+ALTER TABLE `builds`
+  ADD CONSTRAINT `fk_builds_character` FOREIGN KEY (`character_id`) REFERENCES `characters` (`id`) ON DELETE CASCADE;
+
+--
 -- Các ràng buộc cho bảng `characters`
 --
 ALTER TABLE `characters`
@@ -738,12 +758,6 @@ ALTER TABLE `teams`
   ADD CONSTRAINT `teams_ibfk_3` FOREIGN KEY (`character3_id`) REFERENCES `characters` (`id`),
   ADD CONSTRAINT `teams_ibfk_4` FOREIGN KEY (`character4_id`) REFERENCES `characters` (`id`);
 COMMIT;
-
---
--- Các ràng buộc cho bảng `builds`
---
-ALTER TABLE `builds`
-  ADD CONSTRAINT `builds_ibfk_1` FOREIGN KEY (`character_id`) REFERENCES `characters` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;

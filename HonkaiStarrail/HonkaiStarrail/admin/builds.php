@@ -32,12 +32,12 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_build' && isset($_GET['ch
     $cid = intval($_GET['character_id']);
     header('Content-Type: application/json; charset=utf-8');
     $stmt = $conn->prepare("SELECT * FROM builds WHERE character_id = ? LIMIT 1");
-    $stmt->bind_param("i", $cid);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    $row = $res->fetch_assoc();
-    if ($row) {
-        echo json_encode($row, JSON_UNESCAPED_UNICODE);
+    if ($stmt) {
+        $stmt->bind_param("i", $cid);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $row = $res->fetch_assoc();
+        echo json_encode($row ?: null, JSON_UNESCAPED_UNICODE);
     } else {
         echo json_encode(null);
     }
@@ -50,113 +50,159 @@ $characterImages = [];    // id => image path (if exists)
 $r = $conn->query("SELECT id, name, image FROM characters ORDER BY name ASC");
 while ($row = $r->fetch_assoc()) {
     $characters[$row['id']] = $row['name'];
-    $characterImages[$row['id']] = !empty($row['image']) ? 'Hình ảnh/characters/' . $row['image'] : "images/default.png";
+    $characterImages[$row['id']] = !empty($row['image']) ? 'uploads/characters/' . $row['image'] : "images/default.png";
 }
 
-// Truy vấn danh sách Nón Ánh Sáng
+// Truy vấn danh sách Nón Ánh Sáng, Di Vật, Phụ Kiện
 $lightconeList = [];
 $res = $conn->query("SELECT name FROM lightcones ORDER BY name ASC");
-while ($row = $res->fetch_assoc()) {
-    $lightconeList[] = $row['name'];
-}
-// Truy vấn danh sách Di Vật (Relic)
+while ($row = $res->fetch_assoc()) $lightconeList[] = $row['name'];
+
 $relicList = [];
 $res2 = $conn->query("SELECT name FROM relics WHERE type='Relic' ORDER BY name ASC");
-while ($row = $res2->fetch_assoc()) {
-    $relicList[] = $row['name'];
-}
-// Truy vấn danh sách Phụ Kiện Vị Diện (Planetary Ornament Set)
+while ($row = $res2->fetch_assoc()) $relicList[] = $row['name'];
+
 $planarList = [];
 $res3 = $conn->query("SELECT name FROM relics WHERE type='Planetary Ornament Set' ORDER BY name ASC");
-while ($row = $res3->fetch_assoc()) {
-    $planarList[] = $row['name'];
-}
+while ($row = $res3->fetch_assoc()) $planarList[] = $row['name'];
+
 
 // ---------- POST handling: xử lý lưu build ----------
 $msg = "";
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_build'])) {
-    // Sửa lại lấy đúng character_id từ POST
     $character_id = intval($_POST['character_id'] ?? 0);
-    // Nếu character_id là "" (empty string), intval sẽ trả về 0
-    // Nếu character_id là một số, sẽ trả về số đó
-    // Nếu character_id là một chuỗi số, cũng trả về số đó
-    // Nếu character_id là null, cũng trả về 0
 
-    // Kiểm tra lại: character_id phải là số > 0 và tồn tại trong danh sách $characters
     if ($character_id <= 0 || !isset($characters[$character_id])) {
         $msg = "Vui lòng chọn nhân vật trước khi lưu.";
     } else {
-        // collect form values
-        $lightcone = $_POST['lightcone'] ?? '';
-        $relics = $_POST['relics'] ?? '';
-        $planar = $_POST['planar'] ?? '';
-        $main_stats = $_POST['main_stats'] ?? '';
-        $substats = $_POST['substats_priority'] ?? '';
-        $target_stats = $_POST['target_stats'] ?? '';
+        // Helper function to process numeric inputs (handles '0' correctly)
+        $num = function ($key) {
+            return isset($_POST[$key]) && $_POST[$key] !== '' ? floatval($_POST[$key]) : null;
+        };
+        $str = function ($key) {
+            return !empty($_POST[$key]) ? $_POST[$key] : null;
+        };
 
-        // teams: team1_1..team10_4
-        $teams = [];
+        // Thu thập tất cả dữ liệu từ form
+        $data = [
+            'character_id'   => $character_id,
+            'character_name' => $characters[$character_id] ?? null,
+        ];
+
+        for ($i = 1; $i <= 3; $i++) {
+            $data["lightcone{$i}"]      = $str("lightcone{$i}");
+            $data["lightcone{$i}_rate"] = $num("lightcone{$i}_rate");
+            $data["lightcone{$i}_power"] = $num("lightcone{$i}_power"); // Thêm dòng này
+        }
+
+        for ($i = 1; $i <= 3; $i++) {
+            $data["relic{$i}_set"]    = $str("relic{$i}_set");
+            $data["relic{$i}_effect"] = $str("relic{$i}_effect");
+            $data["relic{$i}_rate"]   = $num("relic{$i}_rate");
+            $data["relic{$i}_power"]  = $num("relic{$i}_power"); // Thêm dòng này
+
+            $sets2 = [];
+            if ($data["relic{$i}_effect"] === '2') {
+                $data["relic{$i}_rate"] = null;
+                for ($j = 1; $j <= 5; $j++) {
+                    if ($val = $str("relic{$i}_2set_{$j}")) {
+                        $sets2[] = $val;
+                    }
+                }
+            }
+            $data["relic{$i}_2set"] = !empty($sets2) ? implode(' + ', $sets2) : null;
+        }
+
+        for ($i = 1; $i <= 3; $i++) {
+            $data["ornament{$i}"]      = $str("ornament{$i}");
+            $data["ornament{$i}_rate"] = $num("ornament{$i}_rate");
+        }
+
+        foreach (['body', 'boots', 'sphere', 'rope'] as $type) {
+            $main_stats = [];
+            for ($i = 1; $i <= 3; $i++) {
+                if ($val = $str("main_{$type}_{$i}")) {
+                    $main_stats[] = $val;
+                }
+            }
+            $data["mainstat_{$type}"] = !empty($main_stats) ? implode(' / ', $main_stats) : null;
+        }
+
+        $data['substats']     = $str('substats');
+        $data['target_stats'] = $str('target_stats');
+
         for ($t = 1; $t <= 10; $t++) {
             for ($s = 1; $s <= 4; $s++) {
-                $col = "team{$t}_{$s}";
-                $teams[$col] = $_POST[$col] ?? '';
+                $data["team{$t}_{$s}"] = $str("team{$t}_{$s}");
             }
         }
 
-        // check exists
-        $stmt = $conn->prepare("SELECT id FROM builds WHERE character_id = ? LIMIT 1");
+        // ---------- DB Operation: INSERT or UPDATE ----------
+        $stmt = $conn->prepare("SELECT id FROM builds WHERE character_id = ?");
+        if (!$stmt) {
+            die("Prepare failed (SELECT build): " . $conn->error);
+        }
+
         $stmt->bind_param("i", $character_id);
         $stmt->execute();
-        $res = $stmt->get_result();
-        $exist = $res->fetch_assoc();
-        if ($exist) {
-            // UPDATE
-            $id = (int)$exist['id'];
-            $setParts = [
-                "`lightcone` = ?",
-                "`relics` = ?",
-                "`planar` = ?",
-                "`main_stats` = ?",
-                "`substats_priority` = ?",
-                "`target_stats` = ?"
-            ];
-            $bindVals = [$lightcone, $relics, $planar, $main_stats, $substats, $target_stats];
-            foreach ($teams as $col => $val) {
-                $setParts[] = "`$col` = ?";
-                $bindVals[] = $val;
+        $existing_build = $stmt->get_result()->fetch_assoc();
+
+
+        if ($existing_build) { // UPDATE
+            $id = (int)$existing_build['id'];
+            unset($data['character_id']);
+
+            $set_parts = [];
+            $params = [];
+            $types = '';
+            foreach ($data as $col => $val) {
+                $set_parts[] = "`$col` = ?";
+                $params[] = $val;
+                if (is_float($val)) {
+                    $types .= 'd';
+                } elseif (is_int($val)) {
+                    $types .= 'i';
+                } else {
+                    $types .= 's';
+                }
             }
-            $sql = "UPDATE builds SET " . implode(", ", $setParts) . " WHERE id = ?";
-            $bindVals[] = $id;
-            $types = str_repeat("s", count($bindVals) - 1) . "i";
+            $params[] = $id;
+            $types .= 'i';
+
+            $sql = "UPDATE builds SET " . implode(", ", $set_parts) . " WHERE id = ?";
             $stmt = $conn->prepare($sql);
-            $refs = [];
-            $refs[] = &$types;
-            foreach ($bindVals as $k => $v) $refs[] = &$bindVals[$k];
-            call_user_func_array([$stmt, 'bind_param'], $refs);
-            $ok = $stmt->execute();
-            $msg = $ok ? "Cập nhật build thành công." : "Lỗi khi cập nhật: " . $stmt->error;
-        } else {
-            // INSERT
-            $cols = ["character_id", "lightcone", "relics", "planar", "main_stats", "substats_priority", "target_stats"];
-            $vals = [$character_id, $lightcone, $relics, $planar, $main_stats, $substats, $target_stats];
-            foreach ($teams as $col => $val) {
-                $cols[] = $col;
-                $vals[] = $val;
+            if ($stmt) {
+                $stmt->bind_param($types, ...$params);
+                $ok = $stmt->execute();
+                $msg = $ok ? "Cập nhật build thành công." : "Lỗi khi cập nhật: " . $stmt->error;
+            } else {
+                $msg = "Lỗi chuẩn bị câu lệnh UPDATE: " . $conn->error;
             }
+        } else { // INSERT
+            $cols = array_keys($data);
+            $params = array_values($data);
+            $types = '';
+            foreach ($params as $val) {
+                if (is_float($val)) {
+                    $types .= 'd';
+                } elseif (is_int($val)) {
+                    $types .= 'i';
+                } else {
+                    $types .= 's';
+                }
+            }
+
             $placeholders = implode(", ", array_fill(0, count($cols), '?'));
-            $colList = implode(", ", array_map(function ($c) {
-                return "`$c`";
-            }, $cols));
-            $sql = "INSERT INTO builds ($colList) VALUES ($placeholders)";
-            $types = str_repeat("s", count($vals));
-            $types = 'i' . substr($types, 1);
+            $sql = "INSERT INTO builds (`" . implode("`, `", $cols) . "`) VALUES ($placeholders)";
+
             $stmt = $conn->prepare($sql);
-            $refs = [];
-            $refs[] = &$types;
-            foreach ($vals as $k => $v) $refs[] = &$vals[$k];
-            call_user_func_array([$stmt, 'bind_param'], $refs);
-            $ok = $stmt->execute();
-            $msg = $ok ? "Lưu build mới thành công." : "Lỗi khi lưu: " . $stmt->error;
+            if ($stmt) {
+                $stmt->bind_param($types, ...$params);
+                $ok = $stmt->execute();
+                $msg = $ok ? "Lưu build mới thành công." : "Lỗi khi lưu: " . $stmt->error;
+            } else {
+                $msg = "Lỗi chuẩn bị câu lệnh INSERT: " . $conn->error;
+            }
         }
     }
 }
@@ -324,8 +370,8 @@ $msg = $msg ?? "";
         // normalizeName helper in JS
         function normalizeNameJS(s) {
             s = (s || "").toLowerCase();
-            if (s.normalize) s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             s = s.replace(/đ/g, 'd');
+            if (s.normalize) s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             s = s.replace(/[^a-z0-9 ]/g, '');
             return s.trim().replace(/\s+/g, ' ');
         }
@@ -368,197 +414,211 @@ $msg = $msg ?? "";
                 img.src = url;
                 img.style.display = 'block';
             });
+            // Cập nhật giá trị cho các trường hidden teamX_1
+            const mainCharName = charactersMap[charId] || '';
+            for (let t = 1; t <= 10; t++) {
+                const hiddenInput = document.getElementById(`team${t}_1`);
+                if (hiddenInput) {
+                    hiddenInput.value = mainCharName;
+                }
+            }
         }
 
         // clear form (except selected character)
         function clearFormInputsExceptCharacter() {
-            // clear inputs we created in parts 2..3 (see names used later)
-            document.querySelectorAll('input[name^="team"]').forEach(i => i.value = '');
-            // clear other inputs (lightcone, relics, planar, main stats, sub, target)
-            ['lightcone', 'relics', 'planar', 'main_stats', 'substats_priority', 'target_stats'].forEach(n => {
-                const el = document.querySelector('[name="' + n + '"]');
-                if (el) el.value = '';
-            });
+            const characterSelectValue = document.getElementById('characterSelect').value;
+            const characterIdValue = document.getElementById('hidden_character_id').value;
+
+            document.getElementById('build-form').reset();
+
+            document.getElementById('characterSelect').value = characterSelectValue;
+            document.getElementById('hidden_character_id').value = characterIdValue;
+            if (characterIdValue) {
+                setMainAvatarForAll(characterIdValue);
+            }
+
             // hide slot avatars
             document.querySelectorAll('.team-slot[data-slot]').forEach(slot => {
                 const img = slot.querySelector('img.avatar');
                 const rm = slot.querySelector('.team-remove');
                 const plus = slot.querySelector('.team-plus');
-                if (img) img.style.display = 'none';
-                if (rm) rm.style.display = 'none';
-                if (plus) plus.style.display = 'flex';
-                slot.dataset.selected = '';
+                if (img && !slot.classList.contains('team-main')) {
+                    img.style.display = 'none';
+                    if (rm) rm.style.display = 'none';
+                    if (plus) plus.style.display = 'flex';
+                    slot.dataset.selected = '';
+                }
             });
         }
 
         // populate form from DB row (JSON) returned by GET
         function populateFormFromBuild(row) {
-            // row contains columns like lightcone, relics, planar, main_stats, substats_priority, target_stats, team1_1..team10_4
+            clearFormInputsExceptCharacter();
             try {
-                if (row.lightcone) {
-                    document.querySelector('[name="lightcone"]').value = row.lightcone;
-                    // optional: parse JSON to visible fields if you created them
-                    try {
-                        const obj = JSON.parse(row.lightcone);
-                        if (obj.list) {
-                            for (let i = 1; i <= 3; i++) {
-                                const item = obj.list[i - 1] || {
-                                    name: '',
-                                    rate: '',
-                                    effect: ''
-                                };
-                                document.getElementById('lightcone' + i).value = item.name || '';
-                                document.getElementById('lightcone' + i + '_rate').value = item.rate || '';
-                                document.getElementById('lightcone' + i + '_effect').value = item.effect || '';
+                // Nón ánh sáng
+                for (let i = 1; i <= 3; i++) {
+                    document.getElementById(`lightcone${i}`).value = row[`lightcone${i}`] || '';
+                    document.getElementById(`lightcone${i}_rate`).value = row[`lightcone${i}_rate`] || '';
+                }
+
+                // Di vật
+                for (let i = 1; i <= 3; i++) {
+                    const relicSetInput = document.getElementById(`relic${i}_set`);
+                    if (relicSetInput) relicSetInput.value = row[`relic${i}_set`] || '';
+                    
+                    const effectType = row[`relic${i}_effect`] || '4';
+                    const effectSelect = document.getElementById(`relic${i}_effect`);
+                    if (effectSelect) effectSelect.value = effectType;
+
+                    const rateInput = document.getElementById(`relic${i}_rate`);
+                    if (rateInput) rateInput.value = row[`relic${i}_rate`] || '';
+                    
+                    handleRelicEffectChange(i); // Cập nhật UI
+
+                    if (effectType === '2' && row[`relic${i}_2set`]) {
+                        const sets2 = (row[`relic${i}_2set`] || '').split(' + ');
+                        for (let j = 1; j <= 5; j++) {
+                            const sel = document.getElementById(`relic${i}_2set_${j}`);
+                            if (sel) {
+                                sel.value = sets2[j - 1] || '';
                             }
                         }
-                    } catch (e) {}
+                    }
+                    // Phải gọi lại sau khi gán giá trị để cập nhật các option bị disabled
+                    handleRelicMainChange(i);
+                    handleRelic2SetChange(i, 0); 
                 }
-                if (row.relics) {
-                    document.querySelector('[name="relics"]').value = row.relics;
-                    try {
-                        const obj = JSON.parse(row.relics);
-                        if (obj.list) {
-                            for (let i = 1; i <= 3; i++) {
-                                const item = obj.list[i - 1] || {
-                                    name: '',
-                                    rate: '',
-                                    effect: ''
-                                };
-                                document.getElementById('relic' + i).value = item.name || '';
-                                document.getElementById('relic' + i + '_rate').value = item.rate || '';
-                                document.getElementById('relic' + i + '_effect').value = item.effect || '';
-                            }
+
+                // Phụ kiện
+                for (let i = 1; i <= 3; i++) {
+                    document.getElementById(`ornament${i}`).value = row[`ornament${i}`] || '';
+                    document.getElementById(`ornament${i}_rate`).value = row[`ornament${i}_rate`] || '';
+                }
+
+                // Chỉ số chính
+                ['body', 'boots', 'sphere', 'rope'].forEach(type => {
+                    const stats = (row[`mainstat_${type}`] || '').split(' / ');
+                    for (let i = 1; i <= 3; i++) {
+                        const sel = document.getElementById(`main_${type}_${i}`);
+                        if (sel) {
+                            sel.value = stats[i - 1] || '';
                         }
-                    } catch (e) {}
-                }
-                if (row.planar) {
-                    document.querySelector('[name="planar"]').value = row.planar;
-                    try {
-                        const obj = JSON.parse(row.planar);
-                        if (obj.list) {
-                            for (let i = 1; i <= 3; i++) {
-                                const item = obj.list[i - 1] || {
-                                    name: '',
-                                    rate: ''
-                                };
-                                document.getElementById('ornament' + i).value = item.name || '';
-                                document.getElementById('ornament' + i + '_rate').value = item.rate || '';
-                            }
-                        }
-                    } catch (e) {}
-                }
-                if (row.main_stats) {
-                    document.querySelector('[name="main_stats"]').value = row.main_stats;
-                    try {
-                        const m = JSON.parse(row.main_stats);
-                        document.getElementById('main_body').value = m.body || '';
-                        document.getElementById('main_feet').value = m.feet || '';
-                        document.getElementById('main_sphere').value = m.sphere || '';
-                        document.getElementById('main_rope').value = m.rope || '';
-                    } catch (e) {}
-                }
-                if (row.substats_priority) document.querySelector('[name="substats_priority"]').value = row.substats_priority;
-                if (row.target_stats) document.querySelector('[name="target_stats"]').value = row.target_stats;
+                    }
+                    // Gọi lại để cập nhật hiển thị
+                    for (let i = 1; i < 3; i++) {
+                        showNextMainStat(`main_${type}`, i);
+                    }
+                });
+
+                // Chỉ số phụ và mục tiêu
+                document.getElementById('substats').value = row.substats || '';
+                document.getElementById('target_stats').value = row.target_stats || '';
 
                 // teams
                 for (let t = 1; t <= 10; t++) {
                     for (let s = 1; s <= 4; s++) {
-                        const col = 'team' + t + '_' + s;
-                        const val = row[col] ?? '';
+                        const col = `team${t}_${s}`;
+                        const val = row[col] || '';
                         const hidden = document.getElementById(col);
                         if (hidden) hidden.value = val;
-                        // visual: for slot >1 find that slot and set avatar
-                        if (s > 1) {
-                            const slotEl = document.querySelector('.team-row[data-team="' + t + '"] .team-slot[data-slot="' + s + '"]');
+                        
+                        if (s > 1) { // Bỏ qua slot 1 (nhân vật chính)
+                            const slotEl = document.querySelector(`.team-row[data-team="${t}"] .team-slot[data-slot="${s}"]`);
                             if (slotEl) {
                                 const img = slotEl.querySelector('img.avatar');
                                 const plus = slotEl.querySelector('.team-plus');
                                 const rm = slotEl.querySelector('.team-remove');
+                                const select = slotEl.querySelector('select.team-select');
+
                                 if (val) {
-                                    // try to map name -> image (we have charactersMap id=>name; inverse needed)
+                                    slotEl.dataset.selected = val;
+                                    if(select) select.value = val;
+
                                     let imgUrl = 'images/default.png';
-                                    // try to find id by name
                                     for (const [id, name] of Object.entries(charactersMap)) {
-                                        if (name && val.toString().toLowerCase() === name.toString().toLowerCase()) {
+                                        if (name && normalizeNameJS(val) === normalizeNameJS(name)) {
                                             if (characterImages[id]) {
                                                 imgUrl = characterImages[id];
                                                 break;
                                             }
                                         }
                                     }
-                                    img.src = imgUrl;
-                                    img.style.display = 'block';
+                                    if (img) {
+                                        img.src = imgUrl;
+                                        img.style.display = 'block';
+                                    }
                                     if (plus) plus.style.display = 'none';
                                     if (rm) rm.style.display = 'flex';
-                                    slotEl.dataset.selected = val;
                                 } else {
-                                    if (img) img.style.display = 'none';
+                                    slotEl.dataset.selected = '';
+                                     if(select) select.value = '';
+                                    if (img) {
+                                        img.style.display = 'none';
+                                        img.src = '';
+                                    }
                                     if (plus) plus.style.display = 'flex';
                                     if (rm) rm.style.display = 'none';
-                                    slotEl.dataset.selected = '';
                                 }
                             }
-                        } else {
-                            // main slot: set main avatar already handled by character change
                         }
                     }
                 }
             } catch (err) {
-                console.error('populate error', err);
+                console.error('Lỗi khi điền thông tin build:', err);
+                alert('Đã xảy ra lỗi khi tải thông tin build của nhân vật. Vui lòng kiểm tra console để biết thêm chi tiết.');
             }
         }
 
         // --- Di vật logic ---
         function handleRelicEffectChange(idx) {
-    const effectType = document.getElementById('relic_effect_' + idx).value;
-    const relic2SetContainer = document.getElementById('relic_2set_container_' + idx);
-    const usageRateInput = document.getElementById('relic' + idx + '_rate');
+            const effectType = document.getElementById('relic' + idx + '_effect').value;
+            const relic2SetContainer = document.getElementById('relic_2set_container_' + idx);
+            const usageRateInput = document.getElementById('relic' + idx + '_rate');
 
-    if (effectType === '2') {
-        relic2SetContainer.style.display = 'block';
-        usageRateInput.disabled = true;
-        usageRateInput.value = ''; // Xóa giá trị khi bị vô hiệu hóa
-        handleRelic2SetChange(idx, 0); // Gọi để cập nhật các option
-    } else { // effectType === '4'
-        relic2SetContainer.style.display = 'none';
-        usageRateInput.disabled = false;
-        // Reset all 2-set selects
-        for (let i = 1; i <= 5; i++) {
-            const sel = document.getElementById('relic_2set_' + idx + '_' + i);
-            if (sel) sel.value = '';
-        }
-    }
-}
-
-function handleRelic2SetChange(mainIdx, selectIdx) {
-    const mainRelicValue = document.getElementById('relic' + mainIdx).value;
-    let selectedValues = [mainRelicValue];
-
-    // Thu thập tất cả các giá trị đã chọn trong hàng này
-    for (let i = 1; i <= 5; i++) {
-        const val = document.getElementById('relic_2set_' + mainIdx + '_' + i).value;
-        if (val) {
-            selectedValues.push(val);
-        }
-    }
-
-    // Cập nhật các tùy chọn cho tất cả các select trong hàng
-    for (let i = 1; i <= 5; i++) {
-        const currentSelect = document.getElementById('relic_2set_' + mainIdx + '_' + i);
-        const currentValue = currentSelect.value;
-
-        for (let opt of currentSelect.options) {
-            if (opt.value === "") continue;
-            // Vô hiệu hóa nếu giá trị đã được chọn ở nơi khác TRỪ KHI nó là giá trị hiện tại của select này
-            if (selectedValues.includes(opt.value) && opt.value !== currentValue) {
-                opt.disabled = true;
-            } else {
-                opt.disabled = false;
+            if (effectType === '2') {
+                relic2SetContainer.style.display = 'block';
+                usageRateInput.disabled = true;
+                usageRateInput.value = ''; // Xóa giá trị khi bị vô hiệu hóa
+                handleRelic2SetChange(idx, 0); // Gọi để cập nhật các option
+            } else { // effectType === '4'
+                relic2SetContainer.style.display = 'none';
+                usageRateInput.disabled = false;
+                // Reset all 2-set selects
+                for (let i = 1; i <= 5; i++) {
+                    const sel = document.getElementById('relic' + idx + '_2set_' + i);
+                    if (sel) sel.value = '';
+                }
             }
         }
-    }
-}
+
+        function handleRelic2SetChange(mainIdx, selectIdx) {
+            const mainRelicValue = document.getElementById('relic' + mainIdx + '_set').value;
+            let selectedValues = [mainRelicValue];
+
+            // Thu thập tất cả các giá trị đã chọn trong hàng này
+            for (let i = 1; i <= 5; i++) {
+                const val = document.getElementById('relic' + mainIdx + '_2set_' + i).value;
+                if (val) {
+                    selectedValues.push(val);
+                }
+            }
+
+            // Cập nhật các tùy chọn cho tất cả các select trong hàng
+            for (let i = 1; i <= 5; i++) {
+                const currentSelect = document.getElementById('relic' + mainIdx + '_2set_' + i);
+                const currentValue = currentSelect.value;
+
+                for (let opt of currentSelect.options) {
+                    if (opt.value === "") continue;
+                    // Vô hiệu hóa nếu giá trị đã được chọn ở nơi khác TRỪ KHI nó là giá trị hiện tại của select này
+                    if (selectedValues.includes(opt.value) && opt.value !== currentValue) {
+                        opt.disabled = true;
+                    } else {
+                        opt.disabled = false;
+                    }
+                }
+            }
+        }
 
         function handleRelicMainChange(idx) {
             // Khi di vật chính thay đổi, cần cập nhật lại các tùy chọn cho bộ 2
@@ -600,7 +660,14 @@ function handleRelic2SetChange(mainIdx, selectIdx) {
             const img = slot.querySelector('img.avatar');
             const plus = slot.querySelector('.team-plus');
             const rm = slot.querySelector('.team-remove');
-            // find image of chosen if possible
+
+            // Cập nhật hidden input
+            const team = slot.dataset.team;
+            const slotNum = slot.dataset.slot;
+            const hiddenInput = document.getElementById(`team${team}_${slotNum}`);
+            if (hiddenInput) hiddenInput.value = val;
+
+            // Cập nhật UI
             let imgUrl = 'images/default.png';
             for (const id in charactersMap) {
                 if (charactersMap[id].toLowerCase() === val.toLowerCase()) {
@@ -623,6 +690,14 @@ function handleRelic2SetChange(mainIdx, selectIdx) {
             const img = slot.querySelector('img.avatar');
             const plus = slot.querySelector('.team-plus');
             const sel = slot.querySelector('.team-select');
+
+            // Xóa hidden input
+            const team = slot.dataset.team;
+            const slotNum = slot.dataset.slot;
+            const hiddenInput = document.getElementById(`team${team}_${slotNum}`);
+            if (hiddenInput) hiddenInput.value = "";
+
+            // Cập nhật UI
             if (img) {
                 img.style.display = 'none';
                 img.src = 'images/default.png';
@@ -668,8 +743,16 @@ function handleRelic2SetChange(mainIdx, selectIdx) {
         for (let i = 1; i <= 3; i++) {
             document.addEventListener('input', function(e) {
                 if (e.target.id === 'lightcone' + i) {
-                    if (i === 2) filterDatalistInput('lightcone2', 'datalist-lightcones', ['lightcone1']);
-                    if (i === 3) filterDatalistInput('lightcone3', 'datalist-lightcones', ['lightcone1', 'lightcone2']);
+                    if (i === 1) {
+                        filterDatalistInput('lightcone2', 'datalist-lightcones', ['lightcone1']);
+                        filterDatalistInput('lightcone3', 'datalist-lightcones', ['lightcone1', 'lightcone2']);
+                    } else if (i === 2) {
+                        filterDatalistInput('lightcone1', 'datalist-lightcones', ['lightcone2']);
+                        filterDatalistInput('lightcone3', 'datalist-lightcones', ['lightcone1', 'lightcone2']);
+                    } else { // i === 3
+                        filterDatalistInput('lightcone1', 'datalist-lightcones', ['lightcone3']);
+                        filterDatalistInput('lightcone2', 'datalist-lightcones', ['lightcone1', 'lightcone3']);
+                    }
                 }
             });
         }
@@ -677,8 +760,16 @@ function handleRelic2SetChange(mainIdx, selectIdx) {
         for (let i = 1; i <= 3; i++) {
             document.addEventListener('input', function(e) {
                 if (e.target.id === 'ornament' + i) {
-                    if (i === 2) filterDatalistInput('ornament2', 'datalist-planar', ['ornament1']);
-                    if (i === 3) filterDatalistInput('ornament3', 'datalist-planar', ['ornament1', 'ornament2']);
+                    if (i === 1) {
+                        filterDatalistInput('ornament2', 'datalist-planar', ['ornament1']);
+                        filterDatalistInput('ornament3', 'datalist-planar', ['ornament1', 'ornament2']);
+                    } else if (i === 2) {
+                        filterDatalistInput('ornament1', 'datalist-planar', ['ornament2']);
+                        filterDatalistInput('ornament3', 'datalist-planar', ['ornament1', 'ornament2']);
+                    } else { // i === 3
+                        filterDatalistInput('ornament1', 'datalist-planar', ['ornament3']);
+                        filterDatalistInput('ornament2', 'datalist-planar', ['ornament1', 'ornament3']);
+                    }
                 }
             });
         }
@@ -689,6 +780,7 @@ function handleRelic2SetChange(mainIdx, selectIdx) {
             for (let i = 1; i <= 3; i++) {
                 handleRelicEffectChange(i);
             }
+
         });
     </script>
 </head>
@@ -721,32 +813,28 @@ function handleRelic2SetChange(mainIdx, selectIdx) {
         <div class="admin-main">
             <h1>Build Nhân vật</h1>
 
-            <!-- open form and build sections -->
-            <!-- Datalist cho Nón Ánh Sáng -->
+            <!-- Datalists must be outside the form if they are to be reused, but for simplicity here they are -->
             <datalist id="datalist-lightcones">
                 <?php foreach ($lightconeList as $lc): ?>
                     <option value="<?= htmlspecialchars($lc) ?>"></option>
                 <?php endforeach; ?>
             </datalist>
-            <!-- Datalist cho Di Vật -->
             <datalist id="datalist-relics">
                 <?php foreach ($relicList as $relic): ?>
                     <option value="<?= htmlspecialchars($relic) ?>"></option>
                 <?php endforeach; ?>
             </datalist>
-            <!-- Datalist cho Phụ Kiện Vị Diện -->
             <datalist id="datalist-planar">
                 <?php foreach ($planarList as $planar): ?>
                     <option value="<?= htmlspecialchars($planar) ?>"></option>
                 <?php endforeach; ?>
             </datalist>
 
-            <form method="POST">
+            <form method="POST" id="build-form">
                 <?php if (!empty($msg)): ?>
                     <div class="msg <?= (strpos($msg, 'thành công') !== false) ? 'msg-success' : 'msg-error' ?>"><?= htmlspecialchars($msg) ?></div>
                 <?php endif; ?>
 
-                <!-- Character select (Đã di chuyển vào trong form) -->
                 <div class="character-select-box">
                     <img id="character-avatar-img" class="character-avatar" src="images/default.png" alt="avatar" style="display:none;">
                     <div class="search-bar">
@@ -759,7 +847,6 @@ function handleRelic2SetChange(mainIdx, selectIdx) {
                         </select>
                     </div>
                 </div>
-                <!-- Trường ẩn để lưu character_id và gửi đi cùng form -->
                 <input type="hidden" name="character_id" id="hidden_character_id" value="">
 
                 <div id="build-sections" style="display:none;">
@@ -771,37 +858,22 @@ function handleRelic2SetChange(mainIdx, selectIdx) {
                                 <th>STT</th>
                                 <th>Tên Nón Ánh Sáng</th>
                                 <th>Tỉ lệ sử dụng (%)</th>
-                                <th>Hiệu quả</th>
+                                <th>% Sức Mạnh</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>1</td>
-                                <td>
-                                    <input type="text" id="lightcone1" list="datalist-lightcones" placeholder="Tên Nón Ánh Sáng">
-                                </td>
-                                <td><input type="text" id="lightcone1_rate" placeholder="Tỉ lệ (%)" style="width:60px;"></td>
-                                <td><input type="text" id="lightcone1_effect" placeholder="Hiệu quả (%)" style="width:80px;"></td>
-                            </tr>
-                            <tr>
-                                <td>2</td>
-                                <td>
-                                    <input type="text" id="lightcone2" list="datalist-lightcones" placeholder="Tên Nón Ánh Sáng">
-                                </td>
-                                <td><input type="text" id="lightcone2_rate" placeholder="Tỉ lệ (%)" style="width:60px;"></td>
-                                <td><input type="text" id="lightcone2_effect" placeholder="Hiệu quả (%)" style="width:80px;"></td>
-                            </tr>
-                            <tr>
-                                <td>3</td>
-                                <td>
-                                    <input type="text" id="lightcone3" list="datalist-lightcones" placeholder="Tên Nón Ánh Sáng">
-                                </td>
-                                <td><input type="text" id="lightcone3_rate" placeholder="Tỉ lệ (%)" style="width:60px;"></td>
-                                <td><input type="text" id="lightcone3_effect" placeholder="Hiệu quả (%)" style="width:80px;"></td>
-                            </tr>
+                            <?php for ($i = 1; $i <= 3; $i++): ?>
+                                <tr>
+                                    <td><?= $i ?></td>
+                                    <td>
+                                        <input type="text" id="lightcone<?= $i ?>" name="lightcone<?= $i ?>" list="datalist-lightcones" placeholder="Tên Nón Ánh Sáng">
+                                    </td>
+                                    <td><input type="number" step="any" id="lightcone<?= $i ?>_rate" name="lightcone<?= $i ?>_rate" placeholder="Tỉ lệ (%)" style="width:80px;"></td>
+                                    <td><input type="number" step="any" id="lightcone<?= $i ?>_power" name="lightcone<?= $i ?>_power" placeholder="% Sức Mạnh" style="width:80px;"></td>
+                                </tr>
+                            <?php endfor; ?>
                         </tbody>
                     </table>
-                    <input type="hidden" name="lightcone" id="lightcone">
 
                     <!-- Di Vật đề xuất -->
                     <div class="section-title">Di Vật đề xuất</div>
@@ -810,44 +882,43 @@ function handleRelic2SetChange(mainIdx, selectIdx) {
                             <tr>
                                 <th>STT</th>
                                 <th>Bộ Di Vật</th>
-                                <th>Hiệu quả</th>
+                                <th>Hiệu quả Bộ</th>
                                 <th>Bộ 2 (nếu chọn hiệu quả 2)</th>
                                 <th>Tỉ lệ sử dụng (%)</th>
-                                <th>Hiệu quả</th>
+                                <th>% Sức Mạnh</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php for ($i = 1; $i <= 3; $i++): ?>
-                            <tr>
-                                <td><?= $i ?></td>
-                                <td>
-                                    <input type="text" id="relic<?= $i ?>" list="datalist-relics" placeholder="Tên Bộ Di Vật" onchange="handleRelicMainChange(<?= $i ?>)">
-                                </td>
-                                <td>
-                                    <select id="relic_effect_<?= $i ?>" onchange="handleRelicEffectChange(<?= $i ?>)">
-                                        <option value="2">Hiệu quả bộ 2</option>
-                                        <option value="4" selected>Hiệu quả bộ 4</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <div id="relic_2set_container_<?= $i ?>" style="display: none; display: flex; flex-direction: column; gap: 5px;">
-                                        <?php for ($j = 1; $j <= 5; $j++): ?>
-                                            <select id="relic_2set_<?= $i ?>_<?= $j ?>" onchange="handleRelic2SetChange(<?= $i ?>, <?= $j ?>)">
-                                                <option value="">-- Chọn bộ 2 --</option>
-                                                <?php foreach ($relicList as $relic): ?>
-                                                    <option value="<?= htmlspecialchars($relic) ?>"><?= htmlspecialchars($relic) ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        <?php endfor; ?>
-                                    </div>
-                                </td>
-                                <td><input type="text" id="relic<?= $i ?>_rate" placeholder="Tỉ lệ (%)" style="width:60px;"></td>
-                                <td><input type="text" id="relic<?= $i ?>_effect" placeholder="Hiệu quả (%)" style="width:80px;"></td>
-                            </tr>
+                                <tr>
+                                    <td><?= $i ?></td>
+                                    <td>
+                                        <input type="text" id="relic<?= $i ?>_set" name="relic<?= $i ?>_set" list="datalist-relics" placeholder="Tên Bộ Di Vật" onchange="handleRelicMainChange(<?= $i ?>)">
+                                    </td>
+                                    <td>
+                                        <select id="relic<?= $i ?>_effect" name="relic<?= $i ?>_effect" onchange="handleRelicEffectChange(<?= $i ?>)">
+                                            <option value="4" selected>Hiệu quả bộ 4</option>
+                                            <option value="2">Hiệu quả bộ 2</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <div id="relic_2set_container_<?= $i ?>" style="display: none; display: flex; flex-direction: column; gap: 5px;">
+                                            <?php for ($j = 1; $j <= 5; $j++): ?>
+                                                <select id="relic<?= $i ?>_2set_<?= $j ?>" name="relic<?= $i ?>_2set_<?= $j ?>" onchange="handleRelic2SetChange(<?= $i ?>, <?= $j ?>)">
+                                                    <option value="">-- Chọn bộ 2 --</option>
+                                                    <?php foreach ($relicList as $relic): ?>
+                                                        <option value="<?= htmlspecialchars($relic) ?>"><?= htmlspecialchars($relic) ?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                            <?php endfor; ?>
+                                        </div>
+                                    </td>
+                                    <td><input type="number" step="any" id="relic<?= $i ?>_rate" name="relic<?= $i ?>_rate" placeholder="Tỉ lệ (%)" style="width:80px;"></td>
+                                    <td><input type="number" step="any" id="relic<?= $i ?>_power" name="relic<?= $i ?>_power" placeholder="% Sức Mạnh" style="width:80px;"></td>
+                                </tr>
                             <?php endfor; ?>
                         </tbody>
                     </table>
-                    <input type="hidden" name="relics" id="relics">
 
                     <!-- Phụ Kiện Vị Diện đề xuất -->
                     <div class="section-title">Phụ Kiện Vị Diện đề xuất</div>
@@ -860,30 +931,17 @@ function handleRelic2SetChange(mainIdx, selectIdx) {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>1</td>
-                                <td>
-                                    <input type="text" id="ornament1" list="datalist-planar" placeholder="Tên Phụ Kiện Vị Diện">
-                                </td>
-                                <td><input type="text" id="ornament1_rate" placeholder="Tỉ lệ (%)" style="width:60px;"></td>
-                            </tr>
-                            <tr>
-                                <td>2</td>
-                                <td>
-                                    <input type="text" id="ornament2" list="datalist-planar" placeholder="Tên Phụ Kiện Vị Diện">
-                                </td>
-                                <td><input type="text" id="ornament2_rate" placeholder="Tỉ lệ (%)" style="width:60px;"></td>
-                            </tr>
-                            <tr>
-                                <td>3</td>
-                                <td>
-                                    <input type="text" id="ornament3" list="datalist-planar" placeholder="Tên Phụ Kiện Vị Diện">
-                                </td>
-                                <td><input type="text" id="ornament3_rate" placeholder="Tỉ lệ (%)" style="width:60px;"></td>
-                            </tr>
+                            <?php for ($i = 1; $i <= 3; $i++): ?>
+                                <tr>
+                                    <td><?= $i ?></td>
+                                    <td>
+                                        <input type="text" id="ornament<?= $i ?>" name="ornament<?= $i ?>" list="datalist-planar" placeholder="Tên Phụ Kiện Vị Diện">
+                                    </td>
+                                    <td><input type="number" step="any" id="ornament<?= $i ?>_rate" name="ornament<?= $i ?>_rate" placeholder="Tỉ lệ (%)" style="width:80px;"></td>
+                                </tr>
+                            <?php endfor; ?>
                         </tbody>
                     </table>
-                    <input type="hidden" name="planar" id="planar">
 
                     <!-- Chỉ số chính tốt nhất -->
                     <div class="section-title">Chỉ số chính tốt nhất</div>
@@ -899,173 +957,100 @@ function handleRelic2SetChange(mainIdx, selectIdx) {
                         <tbody>
                             <tr>
                                 <td>
-                                    <div id="main_body_group">
-                                        <select id="main_body_1" onchange="showNextMainStat('main_body', 1)">
-                                            <option value="">Chọn</option>
-                                            <option>%HP</option>
-                                            <option>%ATK</option>
-                                            <option>%DEF</option>
-                                            <option>Tỉ Lệ Bạo Kích</option>
-                                            <option>Sát Thương Bạo Kích</option>
-                                            <option>Chính Xác Hiệu Ứng</option>
-                                            <option>Tăng Lượng Trị Liệu</option>
-                                        </select>
-                                        <select id="main_body_2" style="display:none;" onchange="showNextMainStat('main_body', 2)">
-                                            <option value="">Chọn</option>
-                                            <option>%HP</option>
-                                            <option>%ATK</option>
-                                            <option>%DEF</option>
-                                            <option>Tỉ Lệ Bạo Kích</option>
-                                            <option>Sát Thương Bạo Kích</option>
-                                            <option>Chính Xác Hiệu Ứng</option>
-                                            <option>Tăng Lượng Trị Liệu</option>
-                                        </select>
-                                        <select id="main_body_3" style="display:none;" onchange="showNextMainStat('main_body', 3)">
-                                            <option value="">Chọn</option>
-                                            <option>%HP</option>
-                                            <option>%ATK</option>
-                                            <option>%DEF</option>
-                                            <option>Tỉ Lệ Bạo Kích</option>
-                                            <option>Sát Thương Bạo Kích</option>
-                                            <option>Chính Xác Hiệu Ứng</option>
-                                            <option>Tăng Lượng Trị Liệu</option>
-                                        </select>
+                                    <div id="main_body_group" style="display: flex; flex-direction: column; gap: 5px;">
+                                        <?php for ($i = 1; $i <= 3; $i++): ?>
+                                            <select id="main_body_<?= $i ?>" name="main_body_<?= $i ?>" onchange="showNextMainStat('main_body', <?= $i ?>)" style="<?= $i > 1 ? 'display:none;' : '' ?>">
+                                                <option value="">Chọn</option>
+                                                <option>%HP</option>
+                                                <option>%ATK</option>
+                                                <option>%DEF</option>
+                                                <option>Tỉ Lệ Bạo Kích</option>
+                                                <option>Sát Thương Bạo Kích</option>
+                                                <option>Chính Xác Hiệu Ứng</option>
+                                                <option>Tăng Lượng Trị Liệu</option>
+                                            </select>
+                                        <?php endfor; ?>
                                     </div>
                                 </td>
                                 <td>
-                                    <div id="main_feet_group">
-                                        <select id="main_feet_1" onchange="showNextMainStat('main_feet', 1)">
-                                            <option value="">Chọn</option>
-                                            <option>%HP</option>
-                                            <option>%ATK</option>
-                                            <option>%DEF</option>
-                                            <option>Tốc Độ</option>
-                                        </select>
-                                        <select id="main_feet_2" style="display:none;" onchange="showNextMainStat('main_feet', 2)">
-                                            <option value="">Chọn</option>
-                                            <option>%HP</option>
-                                            <option>%ATK</option>
-                                            <option>%DEF</option>
-                                            <option>Tốc Độ</option>
-                                        </select>
-                                        <select id="main_feet_3" style="display:none;" onchange="showNextMainStat('main_feet', 3)">
-                                            <option value="">Chọn</option>
-                                            <option>%HP</option>
-                                            <option>%ATK</option>
-                                            <option>%DEF</option>
-                                            <option>Tốc Độ</option>
-                                        </select>
+                                    <div id="main_boots_group" style="display: flex; flex-direction: column; gap: 5px;">
+                                        <?php for ($i = 1; $i <= 3; $i++): ?>
+                                            <select id="main_boots_<?= $i ?>" name="main_boots_<?= $i ?>" onchange="showNextMainStat('main_boots', <?= $i ?>)" style="<?= $i > 1 ? 'display:none;' : '' ?>">
+                                                <option value="">Chọn</option>
+                                                <option>%HP</option>
+                                                <option>%ATK</option>
+                                                <option>%DEF</option>
+                                                <option>Tốc Độ</option>
+                                            </select>
+                                        <?php endfor; ?>
                                     </div>
                                 </td>
                                 <td>
-                                    <div id="main_sphere_group">
-                                        <select id="main_sphere_1" onchange="showNextMainStat('main_sphere', 1)">
-                                            <option value="">Chọn</option>
-                                            <option>%HP</option>
-                                            <option>%ATK</option>
-                                            <option>%DEF</option>
-                                            <option>Tăng Sát Thương Vật Lý</option>
-                                            <option>Tăng Sát Thương Hỏa</option>
-                                            <option>Tăng Sát Thương Băng</option>
-                                            <option>Tăng Sát Thương Lôi</option>
-                                            <option>Tăng Sát Thương Phong</option>
-                                            <option>Tăng Sát Thương Lượng Tử</option>
-                                            <option>Tăng Sát Thương Số Ảo</option>
-                                        </select>
-                                        <select id="main_sphere_2" style="display:none;" onchange="showNextMainStat('main_sphere', 2)">
-                                            <option value="">Chọn</option>
-                                            <option>%HP</option>
-                                            <option>%ATK</option>
-                                            <option>%DEF</option>
-                                            <option>Tăng Sát Thương Vật Lý</option>
-                                            <option>Tăng Sát Thương Hỏa</option>
-                                            <option>Tăng Sát Thương Băng</option>
-                                            <option>Tăng Sát Thương Lôi</option>
-                                            <option>Tăng Sát Thương Phong</option>
-                                            <option>Tăng Sát Thương Lượng Tử</option>
-                                            <option>Tăng Sát Thương Số Ảo</option>
-                                        </select>
-                                        <select id="main_sphere_3" style="display:none;" onchange="showNextMainStat('main_sphere', 3)">
-                                            <option value="">Chọn</option>
-                                            <option>%HP</option>
-                                            <option>%ATK</option>
-                                            <option>%DEF</option>
-                                            <option>Tăng Sát Thương Vật Lý</option>
-                                            <option>Tăng Sát Thương Hỏa</option>
-                                            <option>Tăng Sát Thương Băng</option>
-                                            <option>Tăng Sát Thương Lôi</option>
-                                            <option>Tăng Sát Thương Phong</option>
-                                            <option>Tăng Sát Thương Lượng Tử</option>
-                                            <option>Tăng Sát Thương Số Ảo</option>
-                                        </select>
+                                    <div id="main_sphere_group" style="display: flex; flex-direction: column; gap: 5px;">
+                                        <?php for ($i = 1; $i <= 3; $i++): ?>
+                                            <select id="main_sphere_<?= $i ?>" name="main_sphere_<?= $i ?>" onchange="showNextMainStat('main_sphere', <?= $i ?>)" style="<?= $i > 1 ? 'display:none;' : '' ?>">
+                                                <option value="">Chọn</option>
+                                                <option>%HP</option>
+                                                <option>%ATK</option>
+                                                <option>%DEF</option>
+                                                <option>Tăng Sát Thương Vật Lý</option>
+                                                <option>Tăng Sát Thương Hỏa</option>
+                                                <option>Tăng Sát Thương Băng</option>
+                                                <option>Tăng Sát Thương Lôi</option>
+                                                <option>Tăng Sát Thương Phong</option>
+                                                <option>Tăng Sát Thương Lượng Tử</option>
+                                                <option>Tăng Sát Thương Số Ảo</option>
+                                            </select>
+                                        <?php endfor; ?>
                                     </div>
                                 </td>
                                 <td>
-                                    <div id="main_rope_group">
-                                        <select id="main_rope_1" onchange="showNextMainStat('main_rope', 1)">
-                                            <option value="">Chọn</option>
-                                            <option>%HP</option>
-                                            <option>%ATK</option>
-                                            <option>%DEF</option>
-                                            <option>Tấn Công Kích Phá</option>
-                                            <option>Hiệu Suất Hồi Năng Lượng</option>
-                                        </select>
-                                        <select id="main_rope_2" style="display:none;" onchange="showNextMainStat('main_rope', 2)">
-                                            <option value="">Chọn</option>
-                                            <option>%HP</option>
-                                            <option>%ATK</option>
-                                            <option>%DEF</option>
-                                            <option>Tấn Công Kích Phá</option>
-                                            <option>Hiệu Suất Hồi Năng Lượng</option>
-                                        </select>
-                                        <select id="main_rope_3" style="display:none;" onchange="showNextMainStat('main_rope', 3)">
-                                            <option value="">Chọn</option>
-                                            <option>%HP</option>
-                                            <option>%ATK</option>
-                                            <option>%DEF</option>
-                                            <option>Tấn Công Kích Phá</option>
-                                            <option>Hiệu Suất Hồi Năng Lượng</option>
-                                        </select>
+                                    <div id="main_rope_group" style="display: flex; flex-direction: column; gap: 5px;">
+                                        <?php for ($i = 1; $i <= 3; $i++): ?>
+                                            <select id="main_rope_<?= $i ?>" name="main_rope_<?= $i ?>" onchange="showNextMainStat('main_rope', <?= $i ?>)" style="<?= $i > 1 ? 'display:none;' : '' ?>">
+                                                <option value="">Chọn</option>
+                                                <option>%HP</option>
+                                                <option>%ATK</option>
+                                                <option>%DEF</option>
+                                                <option>Tấn Công Kích Phá</option>
+                                                <option>Hiệu Suất Hồi Năng Lượng</option>
+                                            </select>
+                                        <?php endfor; ?>
                                     </div>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
-                    <input type="hidden" name="main_stats" id="main_stats">
 
                     <!-- Sub & Target -->
                     <div class="section-title">Chỉ số phụ ưu tiên</div>
-                    <textarea id="sub_stats_display" style="width:100%;min-height:48px;margin-bottom:16px;" placeholder="VD: Crit Rate > Crit DMG"></textarea>
-                    <input type="hidden" name="substats_priority" id="substats_priority">
+                    <textarea name="substats" id="substats" style="width:100%;min-height:48px;margin-bottom:16px;" placeholder="VD: Tỉ Lệ Bạo Kích > Sát Thương Bạo Kích > Tốc Độ > %ATK"></textarea>
 
                     <div class="section-title">Chỉ số hướng tới</div>
-                    <textarea id="target_stats_display" style="width:100%;min-height:48px;margin-bottom:16px;" placeholder="VD: 150 SPD, 60% CRIT"></textarea>
-                    <input type="hidden" name="target_stats" id="target_stats">
-                    <!-- PHẦN 3/4: Team UI (10 teams) -->
-                    <div class="section-title">Đội hình đề xuất (10 đội)</div>
-                    <div style="display: flex; gap: 32px;">
-                        <div class="team-table" style="flex:1;">
+                    <textarea name="target_stats" id="target_stats" style="width:100%;min-height:48px;margin-bottom:16px;" placeholder="VD: Tốc Độ: 145, Tỉ Lệ Bạo Kích: 70%, Sát Thương Bạo Kích: 150%"></textarea>
+
+                    <!-- Team UI (10 teams) -->
+                    <div class="section-title">Đội hình đề xuất</div>
+                    <div style="display: flex; gap: 32px; flex-wrap: wrap;">
+                        <div class="team-table" style="flex:1; min-width: 400px;">
                             <?php for ($team = 1; $team <= 5; $team++): ?>
                                 <div class="team-row" data-team="<?= $team ?>">
-                                    <!-- main slot (auto-filled) -->
                                     <div class="team-slot team-main" data-slot="1">
                                         <img class="avatar team-main-avatar" src="images/default.png" style="display:none;">
                                     </div>
-                                    <!-- three select slots -->
                                     <?php for ($slot = 2; $slot <= 4; $slot++): ?>
                                         <div class="team-slot" data-slot="<?= $slot ?>" data-team="<?= $team ?>">
                                             <img class="avatar" src="images/default.png" style="display:none;">
                                             <div class="team-remove" onclick="slotRemove(this)">✕</div>
                                             <div class="team-plus" onclick="slotOpen(this.parentElement)">+</div>
                                             <select class="team-select" onchange="slotChoose(this)">
-                                                <option value="">-- Chọn nhân vật --</option>
+                                                <option value="">-- Chọn --</option>
                                                 <?php foreach ($characters as $id => $name): ?>
                                                     <option value="<?= htmlspecialchars($name) ?>"><?= htmlspecialchars($name) ?></option>
                                                 <?php endforeach; ?>
                                             </select>
                                         </div>
                                     <?php endfor; ?>
-                                    <!-- hidden inputs for saving -->
                                     <input type="hidden" name="team<?= $team ?>_1" id="team<?= $team ?>_1" value="">
                                     <input type="hidden" name="team<?= $team ?>_2" id="team<?= $team ?>_2" value="">
                                     <input type="hidden" name="team<?= $team ?>_3" id="team<?= $team ?>_3" value="">
@@ -1073,28 +1058,25 @@ function handleRelic2SetChange(mainIdx, selectIdx) {
                                 </div>
                             <?php endfor; ?>
                         </div>
-                        <div class="team-table" style="flex:1;">
+                        <div class="team-table" style="flex:1; min-width: 400px;">
                             <?php for ($team = 6; $team <= 10; $team++): ?>
                                 <div class="team-row" data-team="<?= $team ?>">
-                                    <!-- main slot (auto-filled) -->
                                     <div class="team-slot team-main" data-slot="1">
                                         <img class="avatar team-main-avatar" src="images/default.png" style="display:none;">
                                     </div>
-                                    <!-- three select slots -->
                                     <?php for ($slot = 2; $slot <= 4; $slot++): ?>
                                         <div class="team-slot" data-slot="<?= $slot ?>" data-team="<?= $team ?>">
                                             <img class="avatar" src="images/default.png" style="display:none;">
                                             <div class="team-remove" onclick="slotRemove(this)">✕</div>
                                             <div class="team-plus" onclick="slotOpen(this.parentElement)">+</div>
                                             <select class="team-select" onchange="slotChoose(this)">
-                                                <option value="">-- Chọn nhân vật --</option>
+                                                <option value="">-- Chọn --</option>
                                                 <?php foreach ($characters as $id => $name): ?>
                                                     <option value="<?= htmlspecialchars($name) ?>"><?= htmlspecialchars($name) ?></option>
                                                 <?php endforeach; ?>
                                             </select>
                                         </div>
                                     <?php endfor; ?>
-                                    <!-- hidden inputs for saving -->
                                     <input type="hidden" name="team<?= $team ?>_1" id="team<?= $team ?>_1" value="">
                                     <input type="hidden" name="team<?= $team ?>_2" id="team<?= $team ?>_2" value="">
                                     <input type="hidden" name="team<?= $team ?>_3" id="team<?= $team ?>_3" value="">
@@ -1104,74 +1086,42 @@ function handleRelic2SetChange(mainIdx, selectIdx) {
                         </div>
                     </div>
 
-                    <!-- SAVE BUTTON -->
                     <div style="margin-top:16px;">
-                        <button type="submit" name="save_build" class="btn-save" onclick="return prepareAndSubmit();">Lưu</button>
+                        <button type="submit" name="save_build" class="btn-save">Lưu Build</button>
                     </div>
 
-                </div> <!-- end build-sections -->
+                </div>
             </form>
 
             <script>
                 function showNextMainStat(type, idx) {
-    // type: main_body, main_feet, main_sphere, main_rope
-    // idx: 1, 2, 3
-    if (idx >= 3) return;
-    const nextIdx = idx + 1;
-    const currSelect = document.getElementById(type + '_' + idx);
-    const nextSelect = document.getElementById(type + '_' + nextIdx);
+                    if (idx >= 3) return;
+                    const currSelect = document.getElementById(type + '_' + idx);
+                    const nextSelect = document.getElementById(type + '_' + (idx + 1));
 
-    // Nếu đã chọn giá trị thì hiện dropdown tiếp theo
-    if (currSelect.value && nextSelect) {
-        nextSelect.style.display = '';
-        // Loại bỏ các lựa chọn đã chọn trước đó
-        let selected = [];
-        for (let i = 1; i <= idx; i++) {
-            const val = document.getElementById(type + '_' + i).value;
-            if (val) selected.push(val);
-        }
-        for (let opt of nextSelect.options) {
-            opt.disabled = selected.includes(opt.value) && opt.value !== "";
-        }
-    } else {
-        // Nếu bỏ chọn thì ẩn các dropdown sau
-        for (let i = nextIdx; i <= 3; i++) {
-            const el = document.getElementById(type + '_' + i);
-            if (el) {
-                el.style.display = 'none';
-                el.value = '';
-            }
-        }
-    }
-}
+                    if (currSelect.value && nextSelect) {
+                        nextSelect.style.display = 'block';
+                        // Disable previously selected options in the next dropdown
+                        let selectedValues = [];
+                        for (let i = 1; i <= idx; i++) {
+                            const val = document.getElementById(type + '_' + i).value;
+                            if (val) selectedValues.push(val);
+                        }
+                        for (let opt of nextSelect.options) {
+                            opt.disabled = selectedValues.includes(opt.value) && opt.value !== "";
+                        }
+                    } else {
+                        // Hide subsequent dropdowns if current one is cleared
+                        for (let i = idx + 1; i <= 3; i++) {
+                            const el = document.getElementById(type + '_' + i);
+                            if (el) {
+                                el.style.display = 'none';
+                                el.value = '';
+                            }
+                        }
+                    }
+                }
             </script>
-            <?php
-            // ---------- SQL to create builds table (run once in your DB) ----------
-            /*
-CREATE TABLE `builds` (
-  `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `character_id` INT NOT NULL UNIQUE,
-  `lightcone` TEXT,
-  `relics` TEXT,
-  `planar` TEXT,
-  `main_stats` TEXT,
-  `substats_priority` TEXT,
-  `target_stats` TEXT,
-  -- team columns:
-  `team1_1` VARCHAR(150), `team1_2` VARCHAR(150), `team1_3` VARCHAR(150), `team1_4` VARCHAR(150),
-  `team2_1` VARCHAR(150), `team2_2` VARCHAR(150), `team2_3` VARCHAR(150), `team2_4` VARCHAR(150),
-  `team3_1` VARCHAR(150), `team3_2` VARCHAR(150), `team3_3` VARCHAR(150), `team3_4` VARCHAR(150),
-  `team4_1` VARCHAR(150), `team4_2` VARCHAR(150), `team4_3` VARCHAR(150), `team4_4` VARCHAR(150),
-  `team5_1` VARCHAR(150), `team5_2` VARCHAR(150), `team5_3` VARCHAR(150), `team5_4` VARCHAR(150),
-  `team6_1` VARCHAR(150), `team6_2` VARCHAR(150), `team6_3` VARCHAR(150), `team6_4` VARCHAR(150),
-  `team7_1` VARCHAR(150), `team7_2` VARCHAR(150), `team7_3` VARCHAR(150), `team7_4` VARCHAR(150),
-  `team8_1` VARCHAR(150), `team8_2` VARCHAR(150), `team8_3` VARCHAR(150), `team8_4` VARCHAR(150),
-  `team9_1` VARCHAR(150), `team9_2` VARCHAR(150), `team9_3` VARCHAR(150), `team9_4` VARCHAR(150),
-  `team10_1` VARCHAR(150), `team10_2` VARCHAR(150), `team10_3` VARCHAR(150), `team10_4` VARCHAR(150),
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-*/
-            ?>
 </body>
 
 </html>

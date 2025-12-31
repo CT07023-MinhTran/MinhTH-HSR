@@ -304,59 +304,51 @@ $result = $stmt->get_result();
 
         <?php if ($result && $result->num_rows > 0): ?>
             <?php while ($char = $result->fetch_assoc()): ?>
-
-                <div class="character-card" data-name="<?= strtolower(htmlspecialchars($char['name'])) ?>" data-path="<?= htmlspecialchars($char['path_name']) ?>" data-element="<?= htmlspecialchars($char['element_name']) ?>">
-
-                    <!-- ẢNH NHÂN VẬT -->
-                    <img class="avatar"
-                        src="HonkaiStarrail/admin/uploads/characters/<?= htmlspecialchars(urlencode($char['image'])) ?>"
-                        alt="<?= htmlspecialchars($char['name']) ?>">
-
-                    <div class="info-box">
-                        
-                        <h3><?= htmlspecialchars($char['name']) ?></h3>
-
-                        <!-- HIỂN THỊ SAO -->
-                        <div class="rarity-stars">
-                            <?php
-                            $rarity = intval($char['rarity']);
-                            if ($rarity > 0) {
-                                $star_class = "star star-" . $rarity;
-                                for ($i = 0; $i < $rarity; $i++) {
-                                    echo '<span class="' . $star_class . '">&#9733;</span>';
+                <a href="Chitietnhanvat.php?id=<?= $char['id'] ?>" style="text-decoration:none;color:inherit;">
+                    <div class="character-card" data-name="<?= strtolower(htmlspecialchars($char['name'])) ?>" data-path="<?= htmlspecialchars($char['path_name']) ?>" data-element="<?= htmlspecialchars($char['element_name']) ?>">
+                        <!-- ẢNH NHÂN VẬT -->
+                        <img class="avatar"
+                            src="HonkaiStarrail/admin/uploads/characters/<?= htmlspecialchars(urlencode($char['image'])) ?>"
+                            alt="<?= htmlspecialchars($char['name']) ?>">
+                        <div class="info-box">
+                            <h3><?= htmlspecialchars($char['name']) ?></h3>
+                            <!-- HIỂN THỊ SAO -->
+                            <div class="rarity-stars">
+                                <?php
+                                $rarity = intval($char['rarity']);
+                                if ($rarity > 0) {
+                                    $star_class = "star star-" . $rarity;
+                                    for ($i = 0; $i < $rarity; $i++) {
+                                        echo '<span class="' . $star_class . '">&#9733;</span>';
+                                    }
                                 }
-                            }
-                            ?>
-                        </div>
-                        <!-- ICON PATH + ELEMENT -->
-                        <div class="small-icons">
-
-                            <img class="small-icon"
-                                src="HonkaiStarrail/admin/uploads/paths/<?= htmlspecialchars(urlencode($char['path_icon'])) ?>"
-                                alt="Path Icon"
-                                title="<?= htmlspecialchars($char['path_name']) ?>">
-
-                            <img class="small-icon"
-                                src="HonkaiStarrail/admin/uploads/elements/<?= htmlspecialchars(urlencode($char['element_icon'])) ?>"
-                                alt="Element Icon"
-                                title="<?= htmlspecialchars($char['element_name']) ?>">
-
-                        </div>
-
-                        <!-- THUỘC TÍNH -->
-                        <div class="stats">
-                            <div class="stat-row">
-                                <span class="stat-label">HP:</span><span><?= $char['hp'] ?></span>
-                                <span class="stat-label">ATK:</span><span><?= $char['atk'] ?></span>
+                                ?>
                             </div>
-
-                            <div class="stat-row">
-                                <span class="stat-label">DEF:</span><span><?= $char['def'] ?></span>
-                                <span class="stat-label">SPD:</span><span><?= $char['spd'] ?></span>
+                            <!-- ICON PATH + ELEMENT -->
+                            <div class="small-icons">
+                                <img class="small-icon"
+                                    src="HonkaiStarrail/admin/uploads/paths/<?= htmlspecialchars(urlencode($char['path_icon'])) ?>"
+                                    alt="Path Icon"
+                                    title="<?= htmlspecialchars($char['path_name']) ?>">
+                                <img class="small-icon"
+                                    src="HonkaiStarrail/admin/uploads/elements/<?= htmlspecialchars(urlencode($char['element_icon'])) ?>"
+                                    alt="Element Icon"
+                                    title="<?= htmlspecialchars($char['element_name']) ?>">
+                            </div>
+                            <!-- THUỘC TÍNH -->
+                            <div class="stats">
+                                <div class="stat-row">
+                                    <span class="stat-label">HP:</span><span><?= $char['hp'] ?></span>
+                                    <span class="stat-label">ATK:</span><span><?= $char['atk'] ?></span>
+                                </div>
+                                <div class="stat-row">
+                                    <span class="stat-label">DEF:</span><span><?= $char['def'] ?></span>
+                                    <span class="stat-label">SPD:</span><span><?= $char['spd'] ?></span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </a>
 
             <?php endwhile; ?>
 
